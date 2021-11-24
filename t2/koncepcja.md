@@ -18,18 +18,18 @@ Sam podział na grupy A i B jest zrozumiały, lecz problem pojawia się przy usu
 Aby nie ograniczać procesów użytkownika do 8 (i tym samym uniknąć przypadkowego zabicia ważnego procesu), założyłem, że usunięcie 
 oznacza przydzielenie czasu procesora równego 0. Tym samym tak naprawdę będą 3 grupy:
 
-B - mająca dwa razy więcej czasu niż grupa A
-A - mająca "standardową" ilość czasu
-C - mająca zerową ilość czasu
+B - mająca dwa razy więcej czasu niż grupa A  
+A - mająca "standardową" ilość czasu  
+C - mająca zerową ilość czasu  
 
 # Przydział do grup
 
 Aby rozróżnić grupy dodam pole 'proc_grp' do struktury 'proc' w jądrze. Będzie ona przyjmowała różne wartości w zależności od przynależności
 procesu do grupy.
 
-- proc_grp = 2 dla grupy B
-- proc_grp = 1 dla grupy A
-- proc_grp = 0 dla grupy C
+- proc_grp = 2 dla grupy B  
+- proc_grp = 1 dla grupy A  
+- proc_grp = 0 dla grupy C  
 
 Oznaczenie jest zgode z założonymi proporcjami kwantów czasu dla danych grup.
 
