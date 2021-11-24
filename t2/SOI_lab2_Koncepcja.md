@@ -33,7 +33,7 @@ procesu do grupy.
 
 Oznaczenie jest zgode z założonymi proporcjami kwantów czasu dla danych grup.
 
-# Algorytm
+# Zarys algorytmu
 
 Aby odpowiednio zmienić szeregowanie zmodyfikuję nieco funkcję sched() w taki sposób aby sprawdzała przez ile kwantów czasu wykonywał się dany proces.
 Jeśli osiągnął on swój limit (zależny od grupy) - wrzucamy go na koniec kolejki. Jeśli nie - na początek.
@@ -49,8 +49,42 @@ Po utworzeniu procesu będzie on miał domyślnie ustawioną grupę A - `proc_gr
 # Przenoszenie procesów między grupami
 
 Aby dobrze zaimplementować przenoszenie i uwzględnić limity będziemy potrzebować zmiennych trzymających liczbę procesów w danej grupie.
+Niech będą to 'group_a_count' i 'group_b_count'. Przy próbie dodania do grupy, która osiągnęła już limit, najstarszy proces będzie przenoszony do grupy C.
+Przenoszenie będzie umożliwiało wywołanie systemowe 'set_proc_gr'. Aby dowiedzieć się w jakiej grupie jest proces - dodam również wywołanie 'get_proc_gr'.
+Tym samym:  
+- przenoszenie procesów do grup A i B odbywa się manualnie przez syscall
+- przenoszenie procesów do grupy C odbywa się automatycznie, jeśli próbujemy dodać proces do grup A lub B i został osiągnięty limit
 
-### Między grupą A i B
+Należy zapamiętać również czas powstawania procesu w strukturze 'proc' - tak aby wiedzieć jaki proces przenieść do grupy C.
 
-Jeśli chcemy przenieść proces z grupy A do grupy B 
+# Planowane pliki do zmiany
 
+### Wywołania systemowe
+Analogicznie jak na laboratorium pierwszym:
+
+ - include/minix/callnr.h - zwiększenie liczby syscalli i dodanie nowych 
+ - src/fs/table.c - dodanie pustych funkcji wywołań
+ - src/mm/proto.h - dodanie prototypów wywołań
+ - src/mm/table.c - dodanie nowych funkcji wywołań
+ - src/mm/main.c - definicja nowych wywołań
+
+Dodawanie taskcalli i edycja plików jądra:
+
+- include/minix/com.h - dodanie wpisów taskcalli
+- src/kernel/system.c - dodanie prototypów taskcalli i ich definicje, przydzielanie standardowych wartości procesom w do_fork()
+- src/kernel/proc.h - dodanie pól do struktury proc
+- src/kernel/glo.h - dodanie zmiennych globalnych określających ilość procesów w danej grupie
+- src/kernel/proc.c - zmiana funkcji sched() zgodnie z ustalonym algorytmem 
+
+# Testowanie
+
+## Testowanie czasów wykonania
+
+Napisanie programu w C z użyciem funkcji time i sprawdzanie w jakim czasie wykona się proces z grupy A, a w jakim z grupy B.
+
+## Testowanie zmian grup
+
+Utworzenie kilku procesów i próba zmiany grup - sprawdzenie na tabeli procesów czy usuwa się najstarszy.
+
+# Autor
+Konrad Wojda, 310990
