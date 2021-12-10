@@ -323,6 +323,12 @@ int main(int argc, char* argv[])
     srand(time(NULL));
     pthread_t thrds[4];
 
+    if (argc == 1)
+    {
+        std::cout << "Wybierz scenariusz jako agrument (1-8)" << std::endl;
+        return 0;
+    }
+
     // Scenariusz 1 - tylko procudent parzystych
     if ((*argv[1] == '1'))
     {
