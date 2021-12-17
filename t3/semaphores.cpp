@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -7,14 +5,8 @@
 #define SLEEP usleep(1000000 + rand() % 1000000)
 #define PRINT(x) std::cout << x << std::endl
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <semaphore.h>
 
 #include <thread>
 #include <mutex>
@@ -153,7 +145,7 @@ void* a1(void* arg)
         std::string s = "A1: Dodano " + std::to_string(i);
         PRINT(s);
 
-        std::cout << "v = { ";
+        std::cout << "{ ";
         for (int n : buffer.Buff()) {
             std::cout << n << ", ";
         }
@@ -198,7 +190,7 @@ void* a2(void* arg)
         std::string s = "A2: Dodano " + std::to_string(i);
         PRINT(s);
 
-        std::cout << "v = { ";
+        std::cout << "{ ";
         for (int n : buffer.Buff()) {
             std::cout << n << ", ";
         }
@@ -242,7 +234,7 @@ void* b1(void* arg)
         std::string s = "B1: Zabrano " + std::to_string(val);
         PRINT(s);
 
-        std::cout << "v = { ";
+        std::cout << "{ ";
         for (int n : buffer.Buff()) {
             std::cout << n << ", ";
         }
@@ -286,7 +278,7 @@ void* b2(void* arg)
         std::string s = "B2: Zabrano " + std::to_string(val);
         PRINT(s);
 
-        std::cout << "v = { ";
+        std::cout << "{ ";
         for (int n : buffer.Buff()) {
             std::cout << n << ", ";
         }
