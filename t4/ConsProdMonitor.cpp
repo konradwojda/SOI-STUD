@@ -307,7 +307,7 @@ int main(int argc, char* argv[])
 
     if (argc == 1)
     {
-        std::cout << "Wybierz scenariusz jako agrument (1-8)" << std::endl;
+        std::cout << "Wybierz scenariusz jako agrument (1-7)" << std::endl;
         return 0;
     }
 
@@ -369,17 +369,4 @@ int main(int argc, char* argv[])
         pthread_join(thrds[2], NULL);
         pthread_join(thrds[3], NULL);
     }
-
-    // // Scenariusz 8 - zakleszczenie - główny mutex zablokowany na początku
-    // else if ((*argv[1] == '8'))
-    // {
-    //     pthread_create(&thrds[0], NULL, &a1, NULL);
-    //     pthread_create(&thrds[1], NULL, &a2, NULL);
-    //     pthread_create(&thrds[2], NULL, &b1, NULL);
-    //     pthread_create(&thrds[3], NULL, &b2, NULL);
-    //     pthread_join(thrds[0], NULL);
-    //     pthread_join(thrds[1], NULL);
-    //     pthread_join(thrds[2], NULL);
-    //     pthread_join(thrds[3], NULL);
-    // }
 }
