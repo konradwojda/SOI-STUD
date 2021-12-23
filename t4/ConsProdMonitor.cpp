@@ -2,7 +2,7 @@
 #include <vector>
 #include <iostream>
 
-#define SLEEP usleep(1000000 + rand() % 1000000)
+#define SLEEP usleep(10000)
 #define PRINT(x) std::cout << x << std::endl
 
 #include <pthread.h>
@@ -75,15 +75,18 @@ class ConsProdMonitor : Monitor
 {
 
     Buffer buffer;
-    Condition prodEvenCond, prodOddCond, consEvenCond, consOddCond;
+    Condition prodEvenCond;
+    Condition prodOddCond;
+    Condition consEvenCond;
+    Condition consOddCond;
     unsigned int numOfProdEvenWaiting = 0;
     unsigned int numOfProdOddWaiting = 0;
     unsigned int numOfConsEvenWaiting = 0;
     unsigned int numOfConsOddWaiting = 0;
 
 public:
-    void putEven(unsigned int num);
-    void putOdd(unsigned int num);
+    void putEven(int num);
+    void putOdd(int num);
 
     void getEven();
     void getOdd();
@@ -97,7 +100,7 @@ public:
     bool canConsOdd() { return (buffer.count() >= 7 && buffer.peekFirst() != -1 && buffer.peekFirst() % 2 != 0); };
 };
 
-void ConsProdMonitor::putEven(unsigned int num)
+void ConsProdMonitor::putEven(int num)
 {
     enter();
     
@@ -138,7 +141,7 @@ void ConsProdMonitor::putEven(unsigned int num)
     }
 }
 
-void ConsProdMonitor::putOdd(unsigned int num)
+void ConsProdMonitor::putOdd(int num)
 {
     enter();
     
@@ -191,7 +194,7 @@ void ConsProdMonitor::getEven()
         numOfConsEvenWaiting--;
     }
     
-    auto num = buffer.get();
+    int num = buffer.get();
 
     std::string s = "getEven: Zabrano " + std::to_string(num);
     PRINT(s);
@@ -232,7 +235,7 @@ void ConsProdMonitor::getOdd()
         numOfConsOddWaiting--;
     }
     
-    auto num = buffer.get();
+    int num = buffer.get();
 
     std::string s = "getOdd: Zabrano " + std::to_string(num);
     PRINT(s);
@@ -265,7 +268,7 @@ ConsProdMonitor monitor;
 
 void* a1(void* arg)
 {
-    for(unsigned int i = 0;; i = (i+2) % 50)
+    for(int i = 0;; i = (i+2) % 50)
     {
         monitor.putEven(i);
         SLEEP;
@@ -274,7 +277,7 @@ void* a1(void* arg)
 
 void* a2(void* arg)
 {
-    for(unsigned int i = 1;; i = (i+2) % 50)
+    for(int i = 1;; i = (i+2) % 50)
     {
         monitor.putOdd(i);
         SLEEP;
