@@ -89,7 +89,7 @@ public:
 	{
 		if( waitingCount )
 		{
-			-- waitingCount;
+			--waitingCount;
 			w.v();
 			return true;
 		}//if
@@ -120,7 +120,7 @@ public:
 
 	void wait( Condition & cond )
 	{
-		++ cond.waitingCount;
+		++cond.waitingCount;
 		leave();
 		cond.wait();
 	}

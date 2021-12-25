@@ -2,7 +2,7 @@
 #include <vector>
 #include <iostream>
 
-#define SLEEP usleep(10000)
+#define SLEEP usleep(1000000 + rand() % 1000000)
 #define PRINT(x) std::cout << x << std::endl
 
 #include <pthread.h>
