@@ -1,5 +1,10 @@
 {
     "files.associations": {
         "iostream": "cpp"
-    }
+    },
+    "cSpell.language": "en,pl,pl-PL",
+    "cSpell.words": [
+        "mkdir",
+        "zagnieżdżane"
+    ]
 }
