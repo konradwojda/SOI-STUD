@@ -26,16 +26,38 @@ wolnej pamięci na dysku wirtualnym
 
 # Planowana implementacja
 
-Implementacja w języku `C++`. System plików będzie zawarty w pojedynczym pliku na dysku fizycznym, gdzie będą zapisywane odpowiednie struktury.
+Implementacja w języku `C++`. System plików będzie zawarty w pojedynczym pliku na dysku fizycznym, gdzie będą zapisywane odpowiednie struktury. Struktura całego systemu będzie podobna do systemu plików w Unix V7.
 
 ### Planowane struktury
 
-- super block - zawierający informacje ogólne o systemie plików (rozmiar, maksymalna dostępna pamięć, ilość inode i bloków danych, wskaźniki do nich, itd)
+- superblock - ogólne informacje o systemie plików:
+    - magic number - identyfikacja pliku jako system plików
+    - wielkość bloku danych
+    - ilość bloków danych
+    - ilość wolnych bloków
+    - informacje o i-węzłach:
+        - ilość wolnych iNode
+        - indeks następnego wolnego iNode
+        - ilość iNode ogólnie
+        - wielkość jednego iNode
+    - wskaźniki na:
+        - listę iNode
+        - listę bloków danych
+        - początek bloków iNode
+        - początek bloków danych
 
-- inode (i-węzeł) - struktura opisująca plik - zawiera jego nazwę, tryb (czy katalog), rozmiar, wskaźnik na pierwszy blok danych
+- iNode (i-węzeł) - struktura opisująca plik:
+    - typ pliku (plik, katalog)
+    - czas utworzenia
+    - ilość twardych dowiązań
+    - jeśli plik:
+        - rozmiar pliku
+        - ilość zajętych bloków
+        - wskaźnik na tablicę ze wskaźnikami na bloki danych
+    - jeśli katalog:
+        - wskaźnik na tablicę z i-węzłami plików znajdujących się w katalogu
 
-- blok danych - zawiera dane oraz wskaźnik na kolejny blok.
-
+- blok danych - zawiera dane i wskaźnik na kolejny blok danych
 
 Na początku dysku będzie znajdowała się struktura super block, następnie tablica inode a później bloki danych.
 
