@@ -77,6 +77,10 @@ Skrypty `.sh` wykonujące wszystkie możliwe operacje na dysku wirtualnym, na pr
 
 - kopiowanie z dysku systemu na dysk wirtualny
 
+- rozszerzanie rozmiaru plików
+
+- zmniejszanie rozmiaru plików
+
 - usuwanie plików
 
 - itd
