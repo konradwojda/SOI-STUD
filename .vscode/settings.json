@@ -1,6 +1,9 @@
 {
     "files.associations": {
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
     },
     "cSpell.language": "en,pl,pl-PL",
     "cSpell.words": [
