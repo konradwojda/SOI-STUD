@@ -59,7 +59,7 @@ struct superblock
 class VirtualDisc {
 public:
     FILE* file;
-    char name[FILENAME_LEN];
+    char name[DISCNAME_LEN];
     superblock superblock_;
     u_int64_t node_tab_len;
     u_int64_t data_map_len;
@@ -67,6 +67,7 @@ public:
     inode *node_tab;
     bool *data_map;
     datablock *datablock_tab;
+    void set_name(char file_name[]);
 
     void create(char file_name[], u_int64_t size);
     void open();
@@ -81,6 +82,11 @@ public:
     void make_dir(char* path);
 
 };
+
+void VirtualDisc::set_name(char file_name[])
+{
+    strncpy((char*)this->name, file_name, DISCNAME_LEN);
+}
 
 void VirtualDisc::create(char file_name[], u_int64_t size)
 {
@@ -131,7 +137,6 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
 void VirtualDisc::open()
 {
     // Open file
-    //FIXME: Nazwa pliku nie działa i robi się syf
     file = fopen(this->name, "rb+");
 
     //Read superblock
@@ -143,17 +148,14 @@ void VirtualDisc::open()
 
     //Read inodes
     node_tab = new inode[superblock_.inodes_num];
-    // fseek(file, superblock_.nodes_offset, 0);
     fread(node_tab, sizeof(inode), superblock_.inodes_num, file);
 
     //Read data map
     data_map = new bool[superblock_.datablocks_num];
-    // fseek(file, superblock_.data_map_offset, 0);
     fread(data_map, sizeof(bool), superblock_.datablocks_num, file);
 
     //Read datablocks
     datablock_tab = new datablock[superblock_.datablocks_num];
-    // fseek(file, superblock_.datablocks_offset, 0);
     fread(datablock_tab, sizeof(datablock), superblock_.datablocks_num, file);
 
 }
@@ -240,13 +242,14 @@ void VirtualDisc::make_dir(char* path)
 
 int main(int argc, char* argv[])
 {
-    // VirtualDisc vd;
+    VirtualDisc vd;
+    vd.set_name("test");
     // vd.create("test", 1024*1024);
     // vd.open();
     // vd.make_dir("katalog");
     // vd.save();
-    // vd.open();
-    // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
-    // vd.save();
+    vd.open();
+    std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
+    vd.save();
     return 0;
 }
