@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
 #define BLOCK_SIZE 8192
 
@@ -56,7 +57,7 @@ struct superblock
 };
 
 class VirtualDisc {
-private:
+public:
     FILE* file;
     char name[FILENAME_LEN];
     superblock superblock_;
@@ -67,7 +68,6 @@ private:
     bool *data_map;
     datablock *datablock_tab;
 
-public:
     void create(char file_name[], u_int64_t size);
     void open();
     void save();
@@ -119,8 +119,48 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     fclose(file);
 }
 
+void VirtualDisc::open()
+{
+    // Open file
+    file = fopen(this->name, "rb+");
+
+    //Read superblock
+    fread(&this->superblock_, sizeof(superblock), 1, file);
+
+    //Read inodes
+    node_tab = new inode[superblock_.inodes_num];
+    fseek(file, superblock_.nodes_offset, 0);
+    fread(node_tab, sizeof(inode), superblock_.inodes_num, file);
+
+    //Read data map
+    data_map = new bool[superblock_.datablocks_num];
+    fseek(file, superblock_.data_map_offset, 0);
+    fread(data_map, sizeof(bool), superblock_.datablocks_num, file);
+
+    //Read datablocks
+    datablock_tab = new datablock[superblock_.datablocks_num];
+    fseek(file, superblock_.datablocks_offset, 0);
+    fread(datablock_tab, sizeof(datablock), superblock_.datablocks_num, file);
+
+}
+
+void VirtualDisc::save()
+{
+    fseek(file, 0, 0);
+    fwrite(&this->superblock_, sizeof(superblock), 1, file);
+    fwrite(this->node_tab, sizeof(inode), this->node_tab_len, file);
+    fwrite(this->data_map, sizeof(bool), this->data_map_len, file);
+    fwrite(this->datablock_tab, sizeof(datablock), this->datablock_tab_len, file);
+    fclose(file);
+    file = nullptr;
+}
+
 int main(int argc, char* argv[])
 {
-    // create_virtual_disc(argv[1], 1024*1024);
+    VirtualDisc vd;
+    vd.create(argv[1], 1024*1024);
+    vd.open();
+    std::cout << vd.superblock_.disc_size;
+    vd.save();
     return 0;
 }
