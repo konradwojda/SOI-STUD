@@ -131,7 +131,8 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
 void VirtualDisc::open()
 {
     // Open file
-    file = fopen(this->name, "wb+");
+    //FIXME: Nazwa pliku nie działa i robi się syf
+    file = fopen(this->name, "rb+");
 
     //Read superblock
     fread(&this->superblock_, sizeof(superblock), 1, file);
@@ -239,11 +240,11 @@ void VirtualDisc::make_dir(char* path)
 
 int main(int argc, char* argv[])
 {
-    VirtualDisc vd;
-    vd.create("test", 1024*1024);
-    vd.open();
-    vd.make_dir("katalog");
-    vd.save();
+    // VirtualDisc vd;
+    // vd.create("test", 1024*1024);
+    // vd.open();
+    // vd.make_dir("katalog");
+    // vd.save();
     // vd.open();
     // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
     // vd.save();
