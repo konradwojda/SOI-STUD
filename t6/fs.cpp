@@ -78,6 +78,7 @@ public:
     bool validate_filename(char* filename);
     u_int32_t find_free_node();
     u_int32_t find_free_datablock();
+    void remove_datablock_from_inode(inode* node, uint32_t idx);
 
     inode* find_in_dir(inode* dir, char* filename);
     directory_element* find_elem_in_dir(inode* dir, char* filename);
@@ -315,6 +316,25 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     }
 }
 
+void VirtualDisc::remove_datablock_from_inode(inode* node, uint32_t idx)
+{
+    uint32_t curr_db_idx = node->first_data_block;
+    if(curr_db_idx == idx)
+    {
+        node->first_data_block = -1;
+        return;
+    }
+    while(curr_db_idx != -1)
+    {
+        if(datablock_tab[curr_db_idx].next == idx)
+        {
+            datablock_tab[curr_db_idx].next = -1;
+            return;
+        }
+        curr_db_idx = datablock_tab[curr_db_idx].next;
+    }
+}
+
 void VirtualDisc::copy_file_to_disc(char* filename, char* path)
 {
     inode* dir = find_dir_inode(path);
@@ -337,10 +357,68 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
 
     node_tab[file_inode].references_num = 1;
     node_tab[file_inode].type = inode_type::TYPE_FILE;
+    node_tab[file_inode].size = 0;
 
     add_elem_to_dir(dir, filename, file_inode);
 
     FILE* file_to_copy = fopen(filename, "rb+");
+
+    bool has_data = true;
+
+    node_tab[file_inode].first_data_block = find_free_datablock();
+    if(node_tab[file_inode].first_data_block == -1)
+    {
+        std::cerr << "No free datablocks\n";
+        return;
+    }
+
+    uint32_t curr_datablock_id = node_tab[file_inode].first_data_block;
+
+    while(curr_datablock_id != -1)
+    {
+        uint read_amount_this_block = 0;
+        uint read_amount = 0;
+        while(read_amount_this_block < BLOCK_SIZE)
+        {
+            read_amount = fread(datablock_tab[curr_datablock_id].data, 1, BLOCK_SIZE - read_amount_this_block, file_to_copy);
+
+            if(!read_amount && feof(file_to_copy))
+            {
+                break;
+            }
+            else if (!read_amount)
+            {
+                std::cerr << "Error while reading file\n";
+                return;
+            }
+
+            read_amount_this_block += read_amount;
+            node_tab[file_inode].size += read_amount;
+        }
+        if(!read_amount_this_block)
+        {
+            remove_datablock_from_inode(&node_tab[file_inode], curr_datablock_id);
+            curr_datablock_id = -1;
+        }
+        else if (feof(file_to_copy))
+        {
+            data_map[curr_datablock_id] = true;
+            datablock_tab[curr_datablock_id].next = -1;
+            curr_datablock_id = -1;
+        }
+        else
+        {
+            data_map[curr_datablock_id] = true;
+            datablock_tab[curr_datablock_id].next = find_free_datablock();
+            if(datablock_tab[curr_datablock_id].next == -1)
+            {
+                std::cerr << "No free datablocks\n";
+                return;
+            }
+            curr_datablock_id = datablock_tab[curr_datablock_id].next;
+        }
+
+    }
 }
 
 void VirtualDisc::make_dir(char* path)
