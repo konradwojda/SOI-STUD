@@ -553,6 +553,9 @@ void VirtualDisc::make_dir(char* path)
 
 void VirtualDisc::print_dir_content(inode* dir)
 {
+    std::cout << "Size of files in this directory: " << get_sum_files_in_dir(dir) << std::endl;
+    std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
+    std::cout << "Free space on disk: " << get_free_space() << std::endl;
     if(!(dir->type == inode_type::TYPE_DIRECTORY))
     {
         std::cerr << "Not a directory\n";
@@ -571,7 +574,20 @@ void VirtualDisc::print_dir_content(inode* dir)
             }
             std::cout << "- " << curr_dir_elem.name << std::endl;
             std::cout << "\tinode id: " << curr_dir_elem.inode_id << std::endl;
-            std::cout << "\ttype: " << std::to_string(node_tab[curr_dir_elem.inode_id].type) << std::endl;
+            std::string type;
+            if(node_tab[curr_dir_elem.inode_id].type == 1)
+            {
+                type = "file";
+            }
+            else if (node_tab[curr_dir_elem.inode_id].type == 2)
+            {
+                type = "directory";
+            }
+            else
+            {
+                type = "unknown";
+            }
+            std::cout << "\ttype: " << type << std::endl;
 
         }
         datablock_idx = datablock_tab[datablock_idx].next;
@@ -663,11 +679,11 @@ int main(int argc, char* argv[])
     vd.save();
     vd.open();
     char path[80];
-    strcpy(path, "a/b");
-    uint64_t sum = vd.get_sum_files_in_dir_recursive(vd.find_dir_inode(path));
-    std::cout << sum << std::endl;
-    std::cout << vd.get_free_space() << std::endl;
-    // vd.print_dir_content(vd.find_dir_inode(path));
+    strcpy(path, "a");
+    // uint64_t sum = vd.get_sum_files_in_dir_recursive(vd.find_dir_inode(path));
+    // std::cout << sum << std::endl;
+    // std::cout << vd.get_free_space() << std::endl;
+    vd.print_dir_content(vd.find_dir_inode(path));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");
     // vd.copy_file_from_disc(path, file, fileonpd);
