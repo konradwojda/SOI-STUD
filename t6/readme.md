@@ -5,14 +5,14 @@ tworzonego systemu plików w bajtach. Dopuszcza się utworzenie systemu
 nieznacznie większego lub mniejszego, gdy wynika to z przyjętych założeń
 dotyczących budowy.
 
-- [ ] kopiowanie pliku z dysku systemu na dysk wirtualny,
+- [x] kopiowanie pliku z dysku systemu na dysk wirtualny,
 
 - [x] utworzenie katalogu na dysku wirtualnym (katalogi mogą być zagnieżdżane -
 jednym poleceniem mkdir a/b/c tworzymy 3 katalogi)
 
 - [ ] usunięcie katalogu z dysku wirtualnego
 
-- [ ] kopiowanie pliku z dysku wirtualnego na dysk systemu,
+- [x] kopiowanie pliku z dysku wirtualnego na dysk systemu,
 
 - [ ] wyświetlanie katalogu dysku wirtualnego z informacją o rozmiarze (sumie) plików
 w katalogu, rozmiarze plików w katalogu razem z podkatalogami (suma), oraz ilości

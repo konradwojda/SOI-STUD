@@ -90,6 +90,7 @@ public:
     void make_dir(char* path);
 
     void copy_file_to_disc(char* filename, char* path);
+    void copy_file_from_disc(char* path_to_dir, char* filename, char* name_on_pd);
     void link_to_inode(inode* file_node, char* path);
 
 };
@@ -421,6 +422,35 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
     }
 }
 
+void VirtualDisc::copy_file_from_disc(char* path_to_dir, char* filename, char* name_on_pd)
+{
+    inode* dir = find_dir_inode(path_to_dir);
+    if(!dir)
+    {
+        std::cerr << "Invalid path to directory\n";
+        return;
+    }
+
+    inode* file = find_in_dir(dir, filename);
+    if(!file)
+    {
+        std::cerr << "Invalid filename\n";
+        return;
+    }
+
+    FILE* file_on_pd = fopen(name_on_pd, "wb+");
+
+    uint32_t curr_datablock_index = file->first_data_block;
+    uint64_t size_to_read = file->size;
+    while(curr_datablock_index != -1)
+    {
+        uint8_t* data = datablock_tab[curr_datablock_index].data;
+        fwrite(data, (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE), 1, file_on_pd);
+        size_to_read -= (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE);
+        curr_datablock_index = datablock_tab[curr_datablock_index].next;
+    }
+}
+
 void VirtualDisc::make_dir(char* path)
 {
     // Start at root dir
@@ -571,8 +601,12 @@ int main(int argc, char* argv[])
     vd.open();
     char path[80];
     strcpy(path, "a/b");
-    vd.print_dir_content(vd.find_dir_inode(path));
-    // vd.save();
+    // vd.print_dir_content(vd.find_dir_inode(path));
+    char fileonpd[80];
+    strcpy(fileonpd, "dupa_test");
+    vd.copy_file_from_disc(path, file, fileonpd);
+    vd.save();
+
     // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
     // std::cout << DIR_ELEMS_PER_BLOCK;
     // vd.save();
