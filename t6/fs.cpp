@@ -12,6 +12,8 @@
 // 1/MAX_FILES_PROPORTION will be space for inodes
 #define MAX_FILES_PROPORTION 8
 
+#define DIR_ELEMS_PER_BLOCK (BLOCK_SIZE / sizeof(directory_element))
+
 enum inode_type{
     EMPTY = 0,
     TYPE_FILE = 1,
@@ -108,6 +110,7 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     fwrite(&superblock_, sizeof(superblock), 1, file);
 
     inode root_inode{};
+    root_inode.first_data_block = -1;
     root_inode.type = inode_type::TYPE_DIRECTORY;
     root_inode.references_num = 1;
 
@@ -116,6 +119,7 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     for(int i = 0; i < inodes - 1; ++i)
     {
         inode node{};
+        node.first_data_block = -1;
         fwrite(&node, sizeof(node), 1, file);
     }
 
@@ -127,6 +131,7 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     for(int i = 0; i < superblock_.datablocks_num; i++)
     {
         datablock db{};
+        db.next = -1;
         fwrite(&db, sizeof(db), 1, file);
     }
 
@@ -226,13 +231,47 @@ void VirtualDisc::make_dir(char* path)
         strncpy((char*)dir_elem.name, curr_dir, FILENAME_LEN);
         dir_elem.used = true;
 
-        if (!curr_path->first_data_block)
+        if (curr_path->first_data_block == -1)
         {
             curr_path->first_data_block = find_free_datablock();
             if (curr_path->first_data_block == -1)
                 return;
             *(directory_element*)(datablock_tab[curr_path->first_data_block].data) = dir_elem;
             data_map[curr_path->first_data_block] = true;
+        }
+        else
+        {
+            uint64_t data_block_idx = curr_path->first_data_block;
+            uint64_t last_data_block = data_block_idx;
+            bool success = false;
+            while(data_block_idx != -1)
+            {
+                directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
+                for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+                {
+                    directory_element curr_dir_elem = directory_elements[i];
+                    if (!curr_dir_elem.used)
+                    {
+                        directory_elements[i] = dir_elem;
+                        success = true;
+                        break;
+                    }
+                }
+                if (datablock_tab[data_block_idx].next)
+                {
+                    last_data_block = data_block_idx;
+                }
+                data_block_idx = datablock_tab[data_block_idx].next;
+            }
+            if(!success)
+            {
+                datablock_tab[last_data_block].next = find_free_datablock();
+                uint64_t new_block_id = datablock_tab[last_data_block].next;
+                if (datablock_tab[last_data_block].next == -1)
+                    return;
+                *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
+                data_map[datablock_tab[last_data_block].next] = true;
+            }
         }
 
 
@@ -243,13 +282,14 @@ void VirtualDisc::make_dir(char* path)
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
-    vd.set_name("test");
-    // vd.create("test", 1024*1024);
-    // vd.open();
-    // vd.make_dir("katalog");
-    // vd.save();
+    // vd.set_name("test");
+    vd.create("test", 1024*1024);
     vd.open();
-    std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
+    vd.make_dir("katalog");
+    vd.make_dir("katalog2");
     vd.save();
+    // vd.open();
+    std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
+    // vd.save();
     return 0;
 }
