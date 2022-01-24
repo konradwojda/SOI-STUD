@@ -320,8 +320,8 @@ void VirtualDisc::make_dir(char* path)
                     *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
                     data_map[datablock_tab[last_data_block].next] = true;
                 }
-                curr_path = &node_tab[dir_node];
             }
+            curr_path = &node_tab[dir_node];
         }
 
     }
