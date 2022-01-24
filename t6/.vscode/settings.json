@@ -1,3 +1,11 @@
 {
-    "cSpell.language": "en,pl-PL"
+    "cSpell.language": "en,pl-PL",
+    "cSpell.words": [
+        "mkdir",
+        "vsfs",
+        "zagnieżdżane"
+    ],
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }
