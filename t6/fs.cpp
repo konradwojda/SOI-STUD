@@ -87,6 +87,7 @@ public:
 
     void print_dir_content(inode* dir);
     uint64_t get_sum_files_in_dir(inode* dir);
+    uint64_t get_sum_files_in_dir_recursive(inode* dir);
 
     void make_dir(char* path);
 
@@ -586,6 +587,8 @@ uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
         for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
+            if(!curr_dir_elem.used)
+                continue;
             inode node = node_tab[curr_dir_elem.inode_id];
             sum += node.size;
         }
@@ -594,6 +597,32 @@ uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
     return sum;
 }
 
+uint64_t VirtualDisc::get_sum_files_in_dir_recursive(inode* dir)
+{
+    uint64_t sum = 0;
+    uint64_t curr_datablock_idx = dir->first_data_block;
+    while(curr_datablock_idx != -1)
+    {
+        directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
+        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        {
+            directory_element curr_dir_elem = directory_elements[i];
+            if(!curr_dir_elem.used)
+                continue;
+            inode node = node_tab[curr_dir_elem.inode_id];
+            if(node.type == inode_type::TYPE_DIRECTORY)
+            {
+                sum += get_sum_files_in_dir_recursive(&node);
+            }
+            else if(node.type == inode_type::TYPE_FILE)
+            {
+                sum += node.size;
+            }
+        }
+        curr_datablock_idx = datablock_tab[curr_datablock_idx].next;
+    }
+    return sum;
+}
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
@@ -619,8 +648,8 @@ int main(int argc, char* argv[])
     vd.save();
     vd.open();
     char path[80];
-    strcpy(path, "a/b");
-    uint64_t sum = vd.get_sum_files_in_dir(vd.find_dir_inode(path));
+    strcpy(path, "");
+    uint64_t sum = vd.get_sum_files_in_dir_recursive(vd.find_dir_inode(path));
     std::cout << sum << std::endl;
     // vd.print_dir_content(vd.find_dir_inode(path));
     // char fileonpd[80];
