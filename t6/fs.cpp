@@ -86,6 +86,8 @@ public:
 
     void make_dir(char* path);
 
+    void copy_file_to_disc(char* filename);
+
 };
 
 void VirtualDisc::set_name(char file_name[])
