@@ -219,7 +219,7 @@ directory_element* VirtualDisc::find_elem_in_dir(inode* dir, char* filename)
         for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
-            if (curr_dir_elem.used && strcmp((char*)curr_dir_elem.name, filename))
+            if ((curr_dir_elem.used == true) && strcmp((char*)curr_dir_elem.name, filename) == 0)
             {
                 return &directory_elements[i];
             }
@@ -247,6 +247,7 @@ void VirtualDisc::make_dir(char* path)
         if(!validate_filename(curr_dir))
             std::cout <<"Invalid path" << std::endl;
 
+        //find in dir does not work
         inode* next = find_in_dir(curr_path, curr_dir);
 
         if(next && next->type == inode_type::TYPE_DIRECTORY)
@@ -337,7 +338,7 @@ int main(int argc, char* argv[])
     char dirs[80];
     strcpy(dirs, "a/b/c");
     vd.make_dir(dirs);
-    // vd.make_dir("katalog2");
+    vd.make_dir("katalog2");
     vd.save();
     // vd.open();
     std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
