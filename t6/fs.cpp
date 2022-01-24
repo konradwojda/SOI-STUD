@@ -282,6 +282,15 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     dir_elem.used = true;
     strncpy((char*)dir_elem.name, name, FILENAME_LEN);
 
+    if(dir->first_data_block == -1)
+    {
+        dir->first_data_block = find_free_datablock();
+        if(dir->first_data_block == -1)
+        {
+            std::cerr << "No free datablocks\n";
+            return;
+        }
+    }
     uint64_t data_block_idx = dir->first_data_block;
     uint64_t last_data_block = data_block_idx;
     bool success = false;
@@ -689,30 +698,30 @@ int main(int argc, char* argv[])
     vd.create("test", 1024*1024);
     vd.open();
     char dirs2[80];
-    strcpy(dirs2, "a/b/c/d");
+    strcpy(dirs2, "a");
     vd.make_dir(dirs2);
     char file[80];
     strcpy(file, "dupa");
-    strcpy(dirs2, "a/b");
+    strcpy(dirs2, "a");
     vd.copy_file_to_disc(file, dirs2);
     vd.save();
-    vd.open();
-    char path1[80];
-    strcpy(path1, "a");
-    char file1[80];
-    strcpy(file1, "b");
-    char path2[80];
-    strcpy(path2, "a/b/c");
-    char file2[80];
-    strcpy(file2, "dd");
-    vd.link(path1, file1, path2, file2);
-    strcpy(path1, "a/b/c/dd");
-    vd.print_dir_content(vd.find_dir_inode(path1));
+    // vd.open();
+    // char path1[80];
+    // strcpy(path1, "a");
+    // char file1[80];
+    // strcpy(file1, "b");
+    // char path2[80];
+    // strcpy(path2, "a/b/c");
+    // char file2[80];
+    // strcpy(file2, "dd");
+    // vd.link(path1, file1, path2, file2);
+    // strcpy(path1, "a/b/c/dd");
+    // vd.print_dir_content(vd.find_dir_inode(path1));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");
     // strcpy(path1, "a/b/c");
     // strcpy(file, "dupalink");
     // vd.copy_file_from_disc(path1, file, fileonpd);
-    vd.save();
+    // vd.save();
     return 0;
 }
