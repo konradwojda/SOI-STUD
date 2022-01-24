@@ -81,12 +81,15 @@ public:
 
     inode* find_in_dir(inode* dir, char* filename);
     directory_element* find_elem_in_dir(inode* dir, char* filename);
+    inode* find_dir_inode(char* path);
+    void add_elem_to_dir(inode* dir, char* name, u_int16_t node_id);
 
     void print_dir_content(inode* dir);
 
     void make_dir(char* path);
 
     void copy_file_to_disc(char* filename, char* path);
+    void link_to_inode(inode* file_node, char* path);
 
 };
 
@@ -241,9 +244,103 @@ inode* VirtualDisc::find_in_dir(inode* dir, char* filename)
     return &node_tab[elem->inode_id];
 }
 
+inode* VirtualDisc::find_dir_inode(char* path)
+{
+    // Start at root dir
+    inode* curr_path = node_tab;
+
+    for(char* curr_dir = strtok(path, "/"); curr_dir != nullptr; curr_dir = strtok(nullptr, "/"))
+    {
+        if(!validate_filename(curr_dir))
+            std::cout <<"Invalid path" << std::endl;
+
+        inode* next = find_in_dir(curr_path, curr_dir);
+
+        if(next && next->type == inode_type::TYPE_DIRECTORY)
+        {
+            curr_path = next;
+        }
+        else
+        {
+            std::cerr << "Not a directory\n";
+            return nullptr;
+        }
+
+    }
+    return curr_path;
+}
+
+void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
+{
+    directory_element dir_elem{0};
+    dir_elem.inode_id = node_id;
+    dir_elem.used = true;
+    strncpy((char*)dir_elem.name, name, FILENAME_LEN);
+
+    uint64_t data_block_idx = dir->first_data_block;
+    uint64_t last_data_block = data_block_idx;
+    bool success = false;
+    while(data_block_idx != -1)
+    {
+        directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
+        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        {
+            directory_element curr_dir_elem = directory_elements[i];
+            if (!curr_dir_elem.used)
+            {
+                directory_elements[i] = dir_elem;
+                success = true;
+                break;
+            }
+        }
+        if (datablock_tab[data_block_idx].next)
+        {
+            last_data_block = data_block_idx;
+        }
+        data_block_idx = datablock_tab[data_block_idx].next;
+    }
+    if(!success)
+    {
+        datablock_tab[last_data_block].next = find_free_datablock();
+        if(datablock_tab[last_data_block].next = -1)
+        {
+            std::cerr << "No free datablocks found.\n";
+            return;
+        }
+        uint64_t new_block_id = datablock_tab[last_data_block].next;
+        if (datablock_tab[last_data_block].next == -1)
+            return;
+        *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
+        data_map[datablock_tab[last_data_block].next] = true;
+    }
+}
+
 void VirtualDisc::copy_file_to_disc(char* filename, char* path)
 {
-    
+    inode* dir = find_dir_inode(path);
+    if (!dir)
+    {
+        std::cerr << "Not a valid path\n";
+        return;
+    }
+    if(find_in_dir(dir, filename))
+    {
+        std::cerr << "File already exists\n";
+        return;
+    }
+    u_int32_t file_inode = find_free_node();
+    if(file_inode == -1)
+        {
+            std::cerr << "No free nodes found.\n";
+            return;
+        }
+
+    node_tab[file_inode].references_num = 1;
+    node_tab[file_inode].type = inode_type::TYPE_FILE;
+
+    add_elem_to_dir(dir, filename, file_inode);
+
+    FILE* file_to_copy = fopen(filename, "rb+");
 }
 
 void VirtualDisc::make_dir(char* path)
@@ -285,6 +382,7 @@ void VirtualDisc::make_dir(char* path)
             strncpy((char*)dir_elem.name, curr_dir, FILENAME_LEN);
             dir_elem.used = true;
 
+            //if to wyjebania
             if (curr_path->first_data_block == -1)
             {
                 curr_path->first_data_block = find_free_datablock();
@@ -323,6 +421,11 @@ void VirtualDisc::make_dir(char* path)
                 if(!success)
                 {
                     datablock_tab[last_data_block].next = find_free_datablock();
+                    if(datablock_tab[last_data_block].next = -1)
+                    {
+                        std::cerr << "No free datablocks found.\n";
+                        return;
+                    }
                     uint64_t new_block_id = datablock_tab[last_data_block].next;
                     if (datablock_tab[last_data_block].next == -1)
                         return;
@@ -370,22 +473,28 @@ int main(int argc, char* argv[])
     // vd.set_name("test");
     vd.create("test", 1024*1024);
     vd.open();
-    for(int i = 0; i < 420; i++)
-    {
-        std::string tmp = std::to_string(i);
-        vd.make_dir((char*)tmp.c_str());
-    }
+    // for(int i = 0; i < 420; i++)
+    // {
+    //     std::string tmp = std::to_string(i);
+    //     vd.make_dir((char*)tmp.c_str());
+    // }
     // char dirs[80];
     // strcpy(dirs, "a/b/c");
     // vd.make_dir(dirs);
     // vd.make_dir("katalog2");
-    // char dirs2[80];
-    // strcpy(dirs2, "a/b/c/d");
-    // vd.make_dir(dirs2);
+    char dirs2[80];
+    strcpy(dirs2, "a/b/c/d");
+    vd.make_dir(dirs2);
+    char file[80];
+    strcpy(file, "dupa");
+    strcpy(dirs2, "a/b");
+    vd.copy_file_to_disc(file, dirs2);
     vd.save();
     vd.open();
-    vd.print_dir_content(&vd.node_tab[0]);
-    vd.save();
+    char path[80];
+    strcpy(path, "a/b");
+    vd.print_dir_content(vd.find_dir_inode(path));
+    // vd.save();
     // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
     // std::cout << DIR_ELEMS_PER_BLOCK;
     // vd.save();
