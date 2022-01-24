@@ -82,6 +82,8 @@ public:
     inode* find_in_dir(inode* dir, char* filename);
     directory_element* find_elem_in_dir(inode* dir, char* filename);
 
+    void print_dir_content(inode* dir);
+
     void make_dir(char* path);
 
 };
@@ -247,7 +249,6 @@ void VirtualDisc::make_dir(char* path)
         if(!validate_filename(curr_dir))
             std::cout <<"Invalid path" << std::endl;
 
-        //find in dir does not work
         inode* next = find_in_dir(curr_path, curr_dir);
 
         if(next && next->type == inode_type::TYPE_DIRECTORY)
@@ -329,19 +330,57 @@ void VirtualDisc::make_dir(char* path)
 
 }
 
+void VirtualDisc::print_dir_content(inode* dir)
+{
+    if(!(dir->type == inode_type::TYPE_DIRECTORY))
+    {
+        std::cerr << "Not a directory\n";
+        return;
+    }
+    uint64_t datablock_idx = dir->first_data_block;
+    while(datablock_idx != -1)
+    {
+        directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
+        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        {
+            directory_element curr_dir_elem = directory_elements[i];
+            if (curr_dir_elem.used == false)
+            {
+                continue;
+            }
+            std::cout << "- " << curr_dir_elem.name << std::endl;
+            std::cout << "\tinode id: " << curr_dir_elem.inode_id << std::endl;
+            std::cout << "\ttype: " << std::to_string(node_tab[curr_dir_elem.inode_id].type) << std::endl;
+
+        }
+        datablock_idx = datablock_tab[datablock_idx].next;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
     // vd.set_name("test");
     vd.create("test", 1024*1024);
     vd.open();
-    char dirs[80];
-    strcpy(dirs, "a/b/c");
-    vd.make_dir(dirs);
-    vd.make_dir("katalog2");
+    for(int i = 0; i < 420; i++)
+    {
+        std::string tmp = std::to_string(i);
+        vd.make_dir((char*)tmp.c_str());
+    }
+    // char dirs[80];
+    // strcpy(dirs, "a/b/c");
+    // vd.make_dir(dirs);
+    // vd.make_dir("katalog2");
+    // char dirs2[80];
+    // strcpy(dirs2, "a/b/c/d");
+    // vd.make_dir(dirs2);
     vd.save();
-    // vd.open();
-    std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
+    vd.open();
+    vd.print_dir_content(&vd.node_tab[0]);
+    vd.save();
+    // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
+    // std::cout << DIR_ELEMS_PER_BLOCK;
     // vd.save();
     return 0;
 }
