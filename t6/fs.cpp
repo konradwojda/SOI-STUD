@@ -86,7 +86,7 @@ public:
 
     void make_dir(char* path);
 
-    void copy_file_to_disc(char* filename);
+    void copy_file_to_disc(char* filename, char* path);
 
 };
 
@@ -239,6 +239,11 @@ inode* VirtualDisc::find_in_dir(inode* dir, char* filename)
     if(!elem)
         return nullptr;
     return &node_tab[elem->inode_id];
+}
+
+void VirtualDisc::copy_file_to_disc(char* filename, char* path)
+{
+    
 }
 
 void VirtualDisc::make_dir(char* path)
