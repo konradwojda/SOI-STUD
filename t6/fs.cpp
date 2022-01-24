@@ -86,6 +86,7 @@ public:
     void add_elem_to_dir(inode* dir, char* name, u_int16_t node_id);
 
     void print_dir_content(inode* dir);
+    uint64_t get_sum_files_in_dir(inode* dir);
 
     void make_dir(char* path);
 
@@ -575,6 +576,24 @@ void VirtualDisc::print_dir_content(inode* dir)
     }
 }
 
+uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
+{
+    uint64_t sum = 0;
+    uint64_t curr_datablock_idx = dir->first_data_block;
+    while(curr_datablock_idx != -1)
+    {
+        directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
+        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        {
+            directory_element curr_dir_elem = directory_elements[i];
+            inode node = node_tab[curr_dir_elem.inode_id];
+            sum += node.size;
+        }
+        curr_datablock_idx = datablock_tab[curr_datablock_idx].next;
+    }
+    return sum;
+}
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
@@ -601,10 +620,12 @@ int main(int argc, char* argv[])
     vd.open();
     char path[80];
     strcpy(path, "a/b");
+    uint64_t sum = vd.get_sum_files_in_dir(vd.find_dir_inode(path));
+    std::cout << sum << std::endl;
     // vd.print_dir_content(vd.find_dir_inode(path));
-    char fileonpd[80];
-    strcpy(fileonpd, "dupa_test");
-    vd.copy_file_from_disc(path, file, fileonpd);
+    // char fileonpd[80];
+    // strcpy(fileonpd, "dupa_test");
+    // vd.copy_file_from_disc(path, file, fileonpd);
     vd.save();
 
     // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
