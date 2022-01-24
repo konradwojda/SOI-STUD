@@ -554,7 +554,8 @@ void VirtualDisc::make_dir(char* path)
 void VirtualDisc::print_dir_content(inode* dir)
 {
     std::cout << "Size of files in this directory: " << get_sum_files_in_dir(dir) << std::endl;
-    std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
+    //!FIXME: Tutaj coś nie styka z tym rekursywnym pokazywaniem przez linki
+    // std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
     std::cout << "Free space on disk: " << get_free_space() << std::endl;
     if(!(dir->type == inode_type::TYPE_DIRECTORY))
     {
@@ -685,18 +686,8 @@ void VirtualDisc::link(char* path_to_dir, char* filename, char* path_to_link_dir
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
-    // vd.set_name("test");
     vd.create("test", 1024*1024);
     vd.open();
-    // for(int i = 0; i < 420; i++)
-    // {
-    //     std::string tmp = std::to_string(i);
-    //     vd.make_dir((char*)tmp.c_str());
-    // }
-    // char dirs[80];
-    // strcpy(dirs, "a/b/c");
-    // vd.make_dir(dirs);
-    // vd.make_dir("katalog2");
     char dirs2[80];
     strcpy(dirs2, "a/b/c/d");
     vd.make_dir(dirs2);
@@ -707,28 +698,21 @@ int main(int argc, char* argv[])
     vd.save();
     vd.open();
     char path1[80];
-    strcpy(path1, "a/b/c");
+    strcpy(path1, "a");
     char file1[80];
-    strcpy(file1, "dupalink");
+    strcpy(file1, "b");
     char path2[80];
-    strcpy(path2, "a/b");
+    strcpy(path2, "a/b/c");
     char file2[80];
-    strcpy(file2, "dupa");
-    vd.link(path2, file2, path1, file1);
-    strcpy(path1, "a/b/c");
-    // uint64_t sum = vd.get_sum_files_in_dir_recursive(vd.find_dir_inode(path));
-    // std::cout << sum << std::endl;
-    // std::cout << vd.get_free_space() << std::endl;
+    strcpy(file2, "dd");
+    vd.link(path1, file1, path2, file2);
+    strcpy(path1, "a/b/c/dd");
     vd.print_dir_content(vd.find_dir_inode(path1));
-    char fileonpd[80];
-    strcpy(fileonpd, "dupa_test");
-    strcpy(path1, "a/b/c");
-    strcpy(file, "dupalink");
-    vd.copy_file_from_disc(path1, file, fileonpd);
+    // char fileonpd[80];
+    // strcpy(fileonpd, "dupa_test");
+    // strcpy(path1, "a/b/c");
+    // strcpy(file, "dupalink");
+    // vd.copy_file_from_disc(path1, file, fileonpd);
     vd.save();
-
-    // std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
-    // std::cout << DIR_ELEMS_PER_BLOCK;
-    // vd.save();
     return 0;
 }
