@@ -79,7 +79,8 @@ public:
     u_int32_t find_free_node();
     u_int32_t find_free_datablock();
 
-    directory_element* find_dir_elem(inode* dir, char* filename);
+    inode* find_in_dir(inode* dir, char* filename);
+    directory_element* find_elem_in_dir(inode* dir, char* filename);
 
     void make_dir(char* path);
 
@@ -206,6 +207,36 @@ u_int32_t VirtualDisc::find_free_datablock()
 
 }
 
+directory_element* VirtualDisc::find_elem_in_dir(inode* dir, char* filename)
+{
+    if(dir->type != inode_type::TYPE_DIRECTORY)
+        return nullptr;
+
+    uint64_t datablock_idx = dir->first_data_block;
+    while(datablock_idx != -1)
+    {
+        directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
+        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        {
+            directory_element curr_dir_elem = directory_elements[i];
+            if (curr_dir_elem.used && strcmp((char*)curr_dir_elem.name, filename))
+            {
+                return &directory_elements[i];
+            }
+        }
+        datablock_idx = datablock_tab[datablock_idx].next;
+    }
+    return nullptr;
+}
+
+inode* VirtualDisc::find_in_dir(inode* dir, char* filename)
+{
+    directory_element* elem = find_elem_in_dir(dir, filename);
+    if(!elem)
+        return nullptr;
+    return &node_tab[elem->inode_id];
+}
+
 void VirtualDisc::make_dir(char* path)
 {
     // Start at root dir
@@ -216,64 +247,82 @@ void VirtualDisc::make_dir(char* path)
         if(!validate_filename(curr_dir))
             std::cout <<"Invalid path" << std::endl;
 
-        //TODO: search for next
+        inode* next = find_in_dir(curr_path, curr_dir);
 
-        u_int32_t dir_node = find_free_node();
-        if(dir_node == -1)
-            return;
-
-        node_tab[dir_node].references_num = 1;
-        node_tab[dir_node].type = inode_type::TYPE_DIRECTORY;
-
-        directory_element dir_elem{0};
-        dir_elem.inode_id = dir_node;
-        dir_elem.used = true;
-        strncpy((char*)dir_elem.name, curr_dir, FILENAME_LEN);
-        dir_elem.used = true;
-
-        if (curr_path->first_data_block == -1)
+        if(next && next->type == inode_type::TYPE_DIRECTORY)
         {
-            curr_path->first_data_block = find_free_datablock();
-            if (curr_path->first_data_block == -1)
-                return;
-            *(directory_element*)(datablock_tab[curr_path->first_data_block].data) = dir_elem;
-            data_map[curr_path->first_data_block] = true;
+            curr_path = next;
+        }
+        else if (next)
+        {
+            std::cerr << "Not a directory\n";
+            return;
         }
         else
         {
-            uint64_t data_block_idx = curr_path->first_data_block;
-            uint64_t last_data_block = data_block_idx;
-            bool success = false;
-            while(data_block_idx != -1)
-            {
-                directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
-                for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+            u_int32_t dir_node = find_free_node();
+            if(dir_node == -1)
                 {
-                    directory_element curr_dir_elem = directory_elements[i];
-                    if (!curr_dir_elem.used)
-                    {
-                        directory_elements[i] = dir_elem;
-                        success = true;
-                        break;
-                    }
-                }
-                if (datablock_tab[data_block_idx].next)
-                {
-                    last_data_block = data_block_idx;
-                }
-                data_block_idx = datablock_tab[data_block_idx].next;
-            }
-            if(!success)
-            {
-                datablock_tab[last_data_block].next = find_free_datablock();
-                uint64_t new_block_id = datablock_tab[last_data_block].next;
-                if (datablock_tab[last_data_block].next == -1)
+                    std::cerr << "No free nodes found.\n";
                     return;
-                *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
-                data_map[datablock_tab[last_data_block].next] = true;
+                }
+
+            node_tab[dir_node].references_num = 1;
+            node_tab[dir_node].type = inode_type::TYPE_DIRECTORY;
+
+            directory_element dir_elem{0};
+            dir_elem.inode_id = dir_node;
+            dir_elem.used = true;
+            strncpy((char*)dir_elem.name, curr_dir, FILENAME_LEN);
+            dir_elem.used = true;
+
+            if (curr_path->first_data_block == -1)
+            {
+                curr_path->first_data_block = find_free_datablock();
+                if (curr_path->first_data_block == -1)
+                    {
+                        std::cerr << "No free datablocks found.\n";
+                        return;
+                    }
+                *(directory_element*)(datablock_tab[curr_path->first_data_block].data) = dir_elem;
+                data_map[curr_path->first_data_block] = true;
+            }
+            else
+            {
+                uint64_t data_block_idx = curr_path->first_data_block;
+                uint64_t last_data_block = data_block_idx;
+                bool success = false;
+                while(data_block_idx != -1)
+                {
+                    directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
+                    for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+                    {
+                        directory_element curr_dir_elem = directory_elements[i];
+                        if (!curr_dir_elem.used)
+                        {
+                            directory_elements[i] = dir_elem;
+                            success = true;
+                            break;
+                        }
+                    }
+                    if (datablock_tab[data_block_idx].next)
+                    {
+                        last_data_block = data_block_idx;
+                    }
+                    data_block_idx = datablock_tab[data_block_idx].next;
+                }
+                if(!success)
+                {
+                    datablock_tab[last_data_block].next = find_free_datablock();
+                    uint64_t new_block_id = datablock_tab[last_data_block].next;
+                    if (datablock_tab[last_data_block].next == -1)
+                        return;
+                    *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
+                    data_map[datablock_tab[last_data_block].next] = true;
+                }
+                curr_path = &node_tab[dir_node];
             }
         }
-
 
     }
 
@@ -285,8 +334,10 @@ int main(int argc, char* argv[])
     // vd.set_name("test");
     vd.create("test", 1024*1024);
     vd.open();
-    vd.make_dir("katalog");
-    vd.make_dir("katalog2");
+    char dirs[80];
+    strcpy(dirs, "a/b/c");
+    vd.make_dir(dirs);
+    // vd.make_dir("katalog2");
     vd.save();
     // vd.open();
     std::cout << ((directory_element*)vd.datablock_tab[vd.node_tab[0].first_data_block].data)->name;
