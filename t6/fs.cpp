@@ -88,6 +88,7 @@ public:
     void print_dir_content(inode* dir);
     uint64_t get_sum_files_in_dir(inode* dir);
     uint64_t get_sum_files_in_dir_recursive(inode* dir);
+    uint64_t get_free_space();
 
     void make_dir(char* path);
 
@@ -623,6 +624,20 @@ uint64_t VirtualDisc::get_sum_files_in_dir_recursive(inode* dir)
     }
     return sum;
 }
+
+uint64_t VirtualDisc::get_free_space()
+{
+    uint64_t number_of_free_datablocks = 0;
+    for(int i = 0; i < data_map_len; i++)
+    {
+        if(data_map[i] == 0)
+        {
+            number_of_free_datablocks++;
+        }
+    }
+    return number_of_free_datablocks * BLOCK_SIZE;
+}
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
@@ -648,9 +663,10 @@ int main(int argc, char* argv[])
     vd.save();
     vd.open();
     char path[80];
-    strcpy(path, "");
+    strcpy(path, "a/b");
     uint64_t sum = vd.get_sum_files_in_dir_recursive(vd.find_dir_inode(path));
     std::cout << sum << std::endl;
+    std::cout << vd.get_free_space() << std::endl;
     // vd.print_dir_content(vd.find_dir_inode(path));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");

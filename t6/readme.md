@@ -14,7 +14,7 @@ jednym poleceniem mkdir a/b/c tworzymy 3 katalogi)
 
 - [x] kopiowanie pliku z dysku wirtualnego na dysk systemu,
 
-- [ ] wyświetlanie katalogu dysku wirtualnego z informacją o rozmiarze (sumie) plików
+- [x] wyświetlanie katalogu dysku wirtualnego z informacją o rozmiarze (sumie) plików
 w katalogu, rozmiarze plików w katalogu razem z podkatalogami (suma), oraz ilości
 wolnej pamięci na dysku wirtualnym
 
@@ -26,4 +26,4 @@ wolnej pamięci na dysku wirtualnym
 
 - [ ] skrócenie pliku o zadanej nazwie o n bajtów
 
-- [ ] wyświetlenie informacji o zajętości dysku.
+- [x] wyświetlenie informacji o zajętości dysku.
