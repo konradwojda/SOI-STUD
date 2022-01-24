@@ -554,7 +554,7 @@ void VirtualDisc::make_dir(char* path)
 void VirtualDisc::print_dir_content(inode* dir)
 {
     std::cout << "Size of files in this directory: " << get_sum_files_in_dir(dir) << std::endl;
-    //!FIXME: Tutaj coś nie styka z tym rekursywnym pokazywaniem przez linki
+    //!FIXME: Jeśli jest cykl z dowiązaniami to nie pokazuj rozmiaru
     // std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
     std::cout << "Free space on disk: " << get_free_space() << std::endl;
     if(!(dir->type == inode_type::TYPE_DIRECTORY))
