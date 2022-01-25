@@ -910,6 +910,97 @@ int fs_create(VirtualDisc vd, char* disc_name, uint64_t size)
     }
 }
 
+int fs_copy_to_virtual(VirtualDisc vd, char* filename, char* path)
+{
+    if(fopen(filename, "rb") == nullptr)
+    {
+        std::cout << "Invalid filename\n";
+        return 1;
+    }
+    vd.open();
+    vd.copy_file_to_disc(filename, path);
+    vd.save();
+    return 0;
+}
+
+int fs_copy_from_virtual(VirtualDisc vd, char* path, char* name_on_vd, char* name_on_pd)
+{
+    vd.open();
+    vd.copy_file_from_disc(path, name_on_vd, name_on_pd);
+    vd.save();
+    return 0;
+}
+
+int fs_mkdir(VirtualDisc vd, char* path)
+{
+    vd.open();
+    vd.make_dir(path);
+    vd.save();
+    return 0;
+}
+
+int fs_rm(VirtualDisc vd, char* path, char* filename)
+{
+    // Removes directories recursively
+    vd.open();
+    vd.unlink(path, filename);
+    vd.save();
+    return 0;
+}
+
+int fs_unlink(VirtualDisc vd, char* path, char* filename)
+{
+    // Removes file if number of references is zero
+    vd.open();
+    vd.unlink(path, filename);
+    vd.save();
+    return 0;   
+}
+
+int fs_link(VirtualDisc vd, char* path_to_dir, char* filename, char* path_to_link_dir, char* link_filename)
+{
+    vd.open();
+    vd.link(path_to_dir, filename, path_to_link_dir, link_filename);
+    vd.save();
+    return 0;
+}
+
+int fs_ls(VirtualDisc vd, char* path)
+{
+    vd.open();
+    vd.print_dir_content(vd.find_dir_inode(path));
+    vd.save();
+    return 0;
+}
+
+int fs_increase_filesize(VirtualDisc vd, char* path, char* filename, uint32_t size)
+{
+    vd.open();
+    vd.increase_file_size(path, filename, size);
+    vd.save();
+}
+
+int fs_decrease_filesize(VirtualDisc vd, char* path, char* filename, uint32_t size)
+{
+    vd.open();
+    vd.decrease_file_size(path, filename, size);
+    vd.save();
+}
+
+void print_help()
+{
+    std::cout << "Usage: ./fs <command> <arguments>\n";
+    std::cout << "- create <name> <size> - creates new virtual disc\n";
+    std::cout << "- cpto <path_to_dir> <name_of_file_in_virtual> <name_of_file> - copies file to virtual disc\n";
+    std::cout << "- cpfrom <path_to_dir> <name_on_virtual> <name> - copies file from virtual disc\n";
+    std::cout << "- mkdir <path> - makes directories (nested possible)\n";
+    std::cout << "- rm <path> <filename> - removes file (or directory) of given name from given directory\n";
+    std::cout << "- link <path_to_dir> <filename> <path_to_link_dir> <linked_filename> - creates hard link\n";
+    std::cout << "- unlink <path_to_dir> <filename> - removes link\n";
+    std::cout << "- ls <path> - shows content of given path\n";
+    std::cout << "- inc <path_to_dir> <filename> <size> - increases size of given file by <size> bytes\n";
+    std::cout << "- dec <path_to_dir> <filename> <size> - decreases size of file by <size> bytes\n";
+}
 
 int main(int argc, char* argv[])
 {
