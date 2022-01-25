@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 #define BLOCK_SIZE 8192
 
@@ -79,6 +81,7 @@ public:
     u_int32_t find_free_node();
     u_int32_t find_free_datablock();
     void remove_datablock_from_inode(inode* node, uint32_t idx);
+    std::vector<uint16_t> checked_inodes_ids;
 
     inode* find_in_dir(inode* dir, char* filename);
     directory_element* find_elem_in_dir(inode* dir, char* filename);
@@ -129,19 +132,19 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
 
     fwrite(&root_inode, sizeof(root_inode), 1, file);
 
-    for(int i = 0; i < inodes - 1; ++i)
+    for(unsigned int i = 0; i < inodes - 1; ++i)
     {
         inode node{};
         node.first_data_block = -1;
         fwrite(&node, sizeof(node), 1, file);
     }
 
-    for(int i = 0; i < superblock_.datablocks_num; i++) {
+    for(uint32_t i = 0; i < superblock_.datablocks_num; i++) {
         int j = 0;
         fwrite(&j, sizeof(bool), 1, file);
     }
 
-    for(int i = 0; i < superblock_.datablocks_num; i++)
+    for(uint32_t i = 0; i < superblock_.datablocks_num; i++)
     {
         datablock db{};
         db.next = -1;
@@ -196,7 +199,7 @@ bool VirtualDisc::validate_filename(char* filename)
 
 u_int32_t VirtualDisc::find_free_node()
 {
-    for(int i = 0; i < superblock_.inodes_num; i++)
+    for(uint32_t i = 0; i < superblock_.inodes_num; i++)
     {
         if(node_tab[i].type == inode_type::EMPTY)
         {
@@ -208,7 +211,7 @@ u_int32_t VirtualDisc::find_free_node()
 
 u_int32_t VirtualDisc::find_free_datablock()
 {
-    for (int i = 0; i < superblock_.datablocks_num; i++)
+    for (uint32_t i = 0; i < superblock_.datablocks_num; i++)
     {
         if(data_map[i] == false)
         {
@@ -228,7 +231,7 @@ directory_element* VirtualDisc::find_elem_in_dir(inode* dir, char* filename)
     while(datablock_idx != -1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
-        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
             if ((curr_dir_elem.used == true) && strcmp((char*)curr_dir_elem.name, filename) == 0)
@@ -297,7 +300,7 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     while(data_block_idx != -1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
-        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
             if (!curr_dir_elem.used)
@@ -522,7 +525,7 @@ void VirtualDisc::make_dir(char* path)
                 while(data_block_idx != -1)
                 {
                     directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
-                    for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+                    for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
                     {
                         directory_element curr_dir_elem = directory_elements[i];
                         if (!curr_dir_elem.used)
@@ -563,8 +566,7 @@ void VirtualDisc::make_dir(char* path)
 void VirtualDisc::print_dir_content(inode* dir)
 {
     std::cout << "Size of files in this directory: " << get_sum_files_in_dir(dir) << std::endl;
-    //!FIXME: Jeśli jest cykl z dowiązaniami to nie pokazuj rozmiaru
-    // std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
+    std::cout << "Size of files in this direcotry and subdirectories: " << get_sum_files_in_dir_recursive(dir) << std::endl;
     std::cout << "Free space on disk: " << get_free_space() << std::endl;
     if(!(dir->type == inode_type::TYPE_DIRECTORY))
     {
@@ -575,7 +577,7 @@ void VirtualDisc::print_dir_content(inode* dir)
     while(datablock_idx != -1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
-        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
             if (curr_dir_elem.used == false)
@@ -611,7 +613,7 @@ uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
     while(curr_datablock_idx != -1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
-        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
             if(!curr_dir_elem.used)
@@ -631,11 +633,14 @@ uint64_t VirtualDisc::get_sum_files_in_dir_recursive(inode* dir)
     while(curr_datablock_idx != -1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
-        for(int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+        for(uint64_t i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
         {
             directory_element curr_dir_elem = directory_elements[i];
             if(!curr_dir_elem.used)
                 continue;
+            if(std::find(checked_inodes_ids.begin(), checked_inodes_ids.end(), curr_dir_elem.inode_id) != checked_inodes_ids.end())
+                continue;
+            checked_inodes_ids.push_back(curr_dir_elem.inode_id);
             inode node = node_tab[curr_dir_elem.inode_id];
             if(node.type == inode_type::TYPE_DIRECTORY)
             {
@@ -698,25 +703,25 @@ int main(int argc, char* argv[])
     vd.create("test", 1024*1024);
     vd.open();
     char dirs2[80];
-    strcpy(dirs2, "a");
+    strcpy(dirs2, "a/b/c/d");
     vd.make_dir(dirs2);
     char file[80];
     strcpy(file, "dupa");
-    strcpy(dirs2, "a");
+    strcpy(dirs2, "a/b");
     vd.copy_file_to_disc(file, dirs2);
     vd.save();
-    // vd.open();
-    // char path1[80];
-    // strcpy(path1, "a");
-    // char file1[80];
-    // strcpy(file1, "b");
-    // char path2[80];
-    // strcpy(path2, "a/b/c");
-    // char file2[80];
-    // strcpy(file2, "dd");
-    // vd.link(path1, file1, path2, file2);
-    // strcpy(path1, "a/b/c/dd");
-    // vd.print_dir_content(vd.find_dir_inode(path1));
+    vd.open();
+    char path1[80];
+    strcpy(path1, "a");
+    char file1[80];
+    strcpy(file1, "b");
+    char path2[80];
+    strcpy(path2, "a/b/c");
+    char file2[80];
+    strcpy(file2, "dd");
+    vd.link(path1, file1, path2, file2);
+    strcpy(path1, "a/b/c/dd");
+    vd.print_dir_content(vd.find_dir_inode(path1));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");
     // strcpy(path1, "a/b/c");

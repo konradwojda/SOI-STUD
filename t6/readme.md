@@ -18,7 +18,7 @@ jednym poleceniem mkdir a/b/c tworzymy 3 katalogi)
 w katalogu, rozmiarze plików w katalogu razem z podkatalogami (suma), oraz ilości
 wolnej pamięci na dysku wirtualnym
 
-- [ ] tworzenie twardego dowiązania do pliku lub katalogu
+- [x] tworzenie twardego dowiązania do pliku lub katalogu
 
 - [ ] usuwanie pliku lub dowiązania z wirtualnego dysku,
 
