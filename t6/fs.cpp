@@ -80,14 +80,14 @@ public:
     bool validate_filename(char* filename);
     u_int32_t find_free_node();
     u_int32_t find_free_datablock();
-    void remove_datablock_from_inode(inode* node, uint32_t idx);
+    void remove_datablock_from_inode(inode* node, uint64_t idx);
     std::vector<uint16_t> checked_inodes_ids;
 
     inode* find_in_dir(inode* dir, char* filename);
     directory_element* find_elem_in_dir(inode* dir, char* filename);
     inode* find_dir_inode(char* path);
     void add_elem_to_dir(inode* dir, char* name, u_int16_t node_id);
-    void dealloc_datablocks(uint16_t first_db_id);
+    void dealloc_datablocks(uint64_t first_db_id);
 
     void print_dir_content(inode* dir);
     uint64_t get_sum_files_in_dir(inode* dir);
@@ -337,15 +337,16 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     }
 }
 
-void VirtualDisc::dealloc_datablocks(uint16_t first_db_id)
+void VirtualDisc::dealloc_datablocks(uint64_t first_db_id)
 {
     // Destroys datablock linked list by setting next = -1 for every datablock
     // Also changes data map to show deallocated blocks as unused
-    std::vector<uint16_t> block_ids;
+    std::vector<uint64_t> block_ids;
     if(first_db_id == -1)
         return;
-    uint16_t next_id = datablock_tab[first_db_id].next;
-    block_ids.push_back(next_id);
+    uint64_t next_id = datablock_tab[first_db_id].next;
+    if(next_id != -1)
+        block_ids.push_back(next_id);
     datablock_tab[first_db_id].next = -1;
     while(next_id != -1)
     {
@@ -362,9 +363,9 @@ void VirtualDisc::dealloc_datablocks(uint16_t first_db_id)
 
 }
 
-void VirtualDisc::remove_datablock_from_inode(inode* node, uint32_t idx)
+void VirtualDisc::remove_datablock_from_inode(inode* node, uint64_t idx)
 {
-    uint32_t curr_db_idx = node->first_data_block;
+    uint64_t curr_db_idx = node->first_data_block;
     if(curr_db_idx == idx)
     {
         node->first_data_block = -1;
@@ -803,7 +804,16 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
     {
         new_amount_of_blocks++;
     }
-    //todo
+    //Get id of first block to dealloc
+    uint64_t db_id = file->first_data_block;
+    for(int i = 0; i < new_amount_of_blocks; i++)
+    {
+        db_id = datablock_tab[db_id].next;
+    }
+
+    // Deallocate next blocks from given one
+    dealloc_datablocks(db_id);
+
 }
 
 int main(int argc, char* argv[])
@@ -821,21 +831,31 @@ int main(int argc, char* argv[])
     vd.save();
     vd.open();
     char path1[80];
-    strcpy(path1, "a");
-    char file1[80];
-    strcpy(file1, "b");
-    char path2[80];
-    strcpy(path2, "a/b/c");
-    char file2[80];
-    strcpy(file2, "dd");
-    vd.link(path1, file1, path2, file2);
-    strcpy(path1, "a/b/c");
+    strcpy(path1, "a/b");
     vd.print_dir_content(vd.find_dir_inode(path1));
-    strcpy(path1, "a/b/c");
-    strcpy(file1, "dd");
-    vd.unlink(path1, file1);
-    strcpy(path2, "a/b/c");
-    vd.print_dir_content(vd.find_dir_inode(path2));
+    strcpy(path1, "a/b");
+    char file1[80];
+    strcpy(file1, "dupa");
+    vd.decrease_file_size(path1, file1, 1000);
+    strcpy(path1, "a/b");
+    vd.print_dir_content(vd.find_dir_inode(path1));
+    // vd.open();
+    // char path1[80];
+    // strcpy(path1, "a");
+    // char file1[80];
+    // strcpy(file1, "b");
+    // char path2[80];
+    // strcpy(path2, "a/b/c");
+    // char file2[80];
+    // strcpy(file2, "dd");
+    // vd.link(path1, file1, path2, file2);
+    // strcpy(path1, "a/b/c");
+    // vd.print_dir_content(vd.find_dir_inode(path1));
+    // strcpy(path1, "a/b/c");
+    // strcpy(file1, "dd");
+    // vd.unlink(path1, file1);
+    // strcpy(path2, "a/b/c");
+    // vd.print_dir_content(vd.find_dir_inode(path2));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");
     // strcpy(path1, "a/b/c");
