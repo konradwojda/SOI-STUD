@@ -101,6 +101,8 @@ public:
     void unlink(char* path_to_dir, char* filename);
     void remove_file(inode* file);
 
+    void decrease_file_size(char* path_to_dir, char* filename, uint32_t size_amount);
+
 };
 
 void VirtualDisc::set_name(char file_name[])
@@ -724,6 +726,7 @@ void VirtualDisc::unlink(char* path_to_dir, char* filename)
 
 void VirtualDisc::remove_file(inode* file)
 {
+    //todo: dealloc block in datamap
     file->references_num--;
     if(file->references_num != 0)
         return;
@@ -750,6 +753,32 @@ void VirtualDisc::remove_file(inode* file)
     file->references_num = 0;
     file->size = 0;
     file->type = inode_type::EMPTY;
+}
+
+void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t size_amount)
+{
+    inode* dir = find_dir_inode(path_to_dir);
+    if(!dir)
+    {
+        std::cerr << "Invalid path\n";
+        return;
+    }
+
+    inode* file = find_in_dir(dir, filename);
+    if(!file)
+    {
+        std::cerr << "Invalid filename\n";
+        return;
+    }
+
+    file->size -= size_amount;
+
+    uint32_t new_amount_of_blocks = file->size / BLOCK_SIZE;
+    if(file->size % BLOCK_SIZE > 0)
+    {
+        new_amount_of_blocks++;
+    }
+    //todo
 }
 
 int main(int argc, char* argv[])
