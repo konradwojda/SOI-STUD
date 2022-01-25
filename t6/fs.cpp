@@ -715,19 +715,37 @@ void VirtualDisc::unlink(char* path_to_dir, char* filename)
         return;
     }
 
+    remove_file(file);
+
     directory_element* dir_elem = find_elem_in_dir(dir, filename);
     dir_elem->used = false;
-    // może potrzeba wiecej?
-
-    file->references_num--;
-    if(file->references_num == 0)
-    {
-        remove_file(file);
-    }
+    dir_elem->inode_id = -1;
 }
 
 void VirtualDisc::remove_file(inode* file)
 {
+    file->references_num--;
+    if(file->references_num != 0)
+        return;
+
+    if(file->type == inode_type::TYPE_DIRECTORY)
+    {
+        uint64_t curr_datablock_idx = file->first_data_block;
+        while(curr_datablock_idx != -1)
+        {
+            directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
+            for(uint64_t i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
+            {
+                directory_element curr_dir_elem = directory_elements[i];
+                if(curr_dir_elem.used)
+                {
+                    remove_file(&node_tab[curr_dir_elem.inode_id]);
+                }
+            }
+            curr_datablock_idx = datablock_tab[curr_datablock_idx].next;
+        }
+    }
+
     file->first_data_block = -1;
     file->references_num = 0;
     file->size = 0;
