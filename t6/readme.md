@@ -10,7 +10,7 @@ dotyczących budowy.
 - [x] utworzenie katalogu na dysku wirtualnym (katalogi mogą być zagnieżdżane -
 jednym poleceniem mkdir a/b/c tworzymy 3 katalogi)
 
-- [ ] usunięcie katalogu z dysku wirtualnego
+- [x] usunięcie katalogu z dysku wirtualnego
 
 - [x] kopiowanie pliku z dysku wirtualnego na dysk systemu,
 
@@ -20,7 +20,7 @@ wolnej pamięci na dysku wirtualnym
 
 - [x] tworzenie twardego dowiązania do pliku lub katalogu
 
-- [ ] usuwanie pliku lub dowiązania z wirtualnego dysku,
+- [x] usuwanie pliku lub dowiązania z wirtualnego dysku,
 
 - [ ] dodanie do pliku o zadanej nazwie n bajtów
 

@@ -98,6 +98,8 @@ public:
     void copy_file_to_disc(char* filename, char* path);
     void copy_file_from_disc(char* path_to_dir, char* filename, char* name_on_pd);
     void link(char* path_to_dir, char* filename, char* path_to_link_dir, char* link_filename);
+    void unlink(char* path_to_dir, char* filename);
+    void remove_file(inode* file);
 
 };
 
@@ -697,6 +699,41 @@ void VirtualDisc::link(char* path_to_dir, char* filename, char* path_to_link_dir
     add_elem_to_dir(link_dir, link_filename, file-node_tab);
 }
 
+void VirtualDisc::unlink(char* path_to_dir, char* filename)
+{
+    inode* dir = find_dir_inode(path_to_dir);
+    if(!dir)
+    {
+        std::cerr << "Invalid path\n";
+        return;
+    }
+
+    inode* file = find_in_dir(dir, filename);
+    if(!file)
+    {
+        std::cerr << "Invalid filename\n";
+        return;
+    }
+
+    directory_element* dir_elem = find_elem_in_dir(dir, filename);
+    dir_elem->used = false;
+    // może potrzeba wiecej?
+
+    file->references_num--;
+    if(file->references_num == 0)
+    {
+        remove_file(file);
+    }
+}
+
+void VirtualDisc::remove_file(inode* file)
+{
+    file->first_data_block = -1;
+    file->references_num = 0;
+    file->size = 0;
+    file->type = inode_type::EMPTY;
+}
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
@@ -720,8 +757,13 @@ int main(int argc, char* argv[])
     char file2[80];
     strcpy(file2, "dd");
     vd.link(path1, file1, path2, file2);
-    strcpy(path1, "a/b/c/dd");
+    strcpy(path1, "a/b/c");
     vd.print_dir_content(vd.find_dir_inode(path1));
+    strcpy(path1, "a/b/c");
+    strcpy(file1, "dd");
+    vd.unlink(path1, file1);
+    strcpy(path2, "a/b/c");
+    vd.print_dir_content(vd.find_dir_inode(path2));
     // char fileonpd[80];
     // strcpy(fileonpd, "dupa_test");
     // strcpy(path1, "a/b/c");
