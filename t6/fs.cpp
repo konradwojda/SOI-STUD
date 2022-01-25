@@ -889,6 +889,28 @@ void VirtualDisc::increase_file_size(char* path_to_dir, char* filename, uint32_t
 
 }
 
+int fs_create(VirtualDisc vd, char* disc_name, uint64_t size)
+{
+    char d_name[16];
+    char choice;
+    if(fopen(disc_name, "rb") == nullptr)
+    {
+        std::cout << "Disc doesn't exist. Do you want to create new one?(y/n)\n";
+        std::cin >> choice;
+    }
+    if(choice == 'y')
+    {
+        strcpy(d_name, disc_name);
+        vd.create(d_name, size);
+        return 0;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
