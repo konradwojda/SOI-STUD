@@ -233,7 +233,7 @@ directory_element* VirtualDisc::find_elem_in_dir(inode* dir, char* filename)
         return nullptr;
 
     uint64_t datablock_idx = dir->first_data_block;
-    while(datablock_idx != -1)
+    while(datablock_idx != (uint64_t)-1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
         for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -290,10 +290,10 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     dir_elem.used = true;
     strncpy((char*)dir_elem.name, name, FILENAME_LEN);
 
-    if(dir->first_data_block == -1)
+    if(dir->first_data_block == (uint64_t)-1)
     {
         dir->first_data_block = find_free_datablock();
-        if(dir->first_data_block == -1)
+        if(dir->first_data_block == (uint64_t)-1)
         {
             std::cerr << "No free datablocks\n";
             return;
@@ -302,7 +302,7 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     uint64_t data_block_idx = dir->first_data_block;
     uint64_t last_data_block = data_block_idx;
     bool success = false;
-    while(data_block_idx != -1)
+    while(data_block_idx != (uint64_t)-1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
         for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -324,13 +324,13 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
     if(!success)
     {
         datablock_tab[last_data_block].next = find_free_datablock();
-        if(datablock_tab[last_data_block].next = -1)
+        if(datablock_tab[last_data_block].next == (uint64_t)-1)
         {
             std::cerr << "No free datablocks found.\n";
             return;
         }
         uint64_t new_block_id = datablock_tab[last_data_block].next;
-        if (datablock_tab[last_data_block].next == -1)
+        if (datablock_tab[last_data_block].next == (uint64_t)-1)
             return;
         *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
         data_map[datablock_tab[last_data_block].next] = true;
@@ -342,18 +342,20 @@ void VirtualDisc::dealloc_datablocks(uint64_t first_db_id)
     // Destroys datablock linked list by setting next = -1 for every datablock
     // Also changes data map to show deallocated blocks as unused
     std::vector<uint64_t> block_ids;
-    if(first_db_id == -1)
+    if(first_db_id == (uint64_t)-1)
         return;
     uint64_t next_id = datablock_tab[first_db_id].next;
-    if(next_id != -1)
+    if(next_id != (uint64_t)-1)
         block_ids.push_back(next_id);
     datablock_tab[first_db_id].next = -1;
-    while(next_id != -1)
+    while(next_id != (uint64_t)-1)
     {
         next_id = datablock_tab[next_id].next;
-        if(next_id != -1)
+        if(next_id != (uint64_t)-1)
+        {
             datablock_tab[next_id].next = -1;
             block_ids.push_back(next_id);
+        }
     }
 
     for(auto id:block_ids)
@@ -371,7 +373,7 @@ void VirtualDisc::remove_datablock_from_inode(inode* node, uint64_t idx)
         node->first_data_block = -1;
         return;
     }
-    while(curr_db_idx != -1)
+    while(curr_db_idx != (uint64_t)-1)
     {
         if(datablock_tab[curr_db_idx].next == idx)
         {
@@ -396,7 +398,7 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
         return;
     }
     u_int32_t file_inode = find_free_node();
-    if(file_inode == -1)
+    if(file_inode == (uint32_t)-1)
         {
             std::cerr << "No free nodes found.\n";
             return;
@@ -410,18 +412,16 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
 
     FILE* file_to_copy = fopen(filename, "rb+");
 
-    bool has_data = true;
-
     node_tab[file_inode].first_data_block = find_free_datablock();
-    if(node_tab[file_inode].first_data_block == -1)
+    if(node_tab[file_inode].first_data_block == (uint64_t)-1)
     {
         std::cerr << "No free datablocks\n";
         return;
     }
 
-    uint32_t curr_datablock_id = node_tab[file_inode].first_data_block;
+    uint64_t curr_datablock_id = node_tab[file_inode].first_data_block;
 
-    while(curr_datablock_id != -1)
+    while(curr_datablock_id != (uint64_t)-1)
     {
         uint read_amount_this_block = 0;
         uint read_amount = 0;
@@ -457,7 +457,7 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
         {
             data_map[curr_datablock_id] = true;
             datablock_tab[curr_datablock_id].next = find_free_datablock();
-            if(datablock_tab[curr_datablock_id].next == -1)
+            if(datablock_tab[curr_datablock_id].next == (uint64_t)-1)
             {
                 std::cerr << "No free datablocks\n";
                 return;
@@ -486,9 +486,9 @@ void VirtualDisc::copy_file_from_disc(char* path_to_dir, char* filename, char* n
 
     FILE* file_on_pd = fopen(name_on_pd, "wb+");
 
-    uint32_t curr_datablock_index = file->first_data_block;
+    uint64_t curr_datablock_index = file->first_data_block;
     uint64_t size_to_read = file->size;
-    while(curr_datablock_index != -1)
+    while(curr_datablock_index != (uint64_t)-1)
     {
         uint8_t* data = datablock_tab[curr_datablock_index].data;
         fwrite(data, (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE), 1, file_on_pd);
@@ -521,7 +521,7 @@ void VirtualDisc::make_dir(char* path)
         else
         {
             u_int32_t dir_node = find_free_node();
-            if(dir_node == -1)
+            if(dir_node == (uint32_t)-1)
                 {
                     std::cerr << "No free nodes found.\n";
                     return;
@@ -537,10 +537,10 @@ void VirtualDisc::make_dir(char* path)
             dir_elem.used = true;
 
             //if to wyjebania
-            if (curr_path->first_data_block == -1)
+            if (curr_path->first_data_block == (uint64_t)-1)
             {
                 curr_path->first_data_block = find_free_datablock();
-                if (curr_path->first_data_block == -1)
+                if (curr_path->first_data_block == (uint64_t)-1)
                     {
                         std::cerr << "No free datablocks found.\n";
                         return;
@@ -553,7 +553,7 @@ void VirtualDisc::make_dir(char* path)
                 uint64_t data_block_idx = curr_path->first_data_block;
                 uint64_t last_data_block = data_block_idx;
                 bool success = false;
-                while(data_block_idx != -1)
+                while(data_block_idx != (uint64_t)-1)
                 {
                     directory_element* directory_elements = (directory_element*)datablock_tab[data_block_idx].data;
                     for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -575,13 +575,13 @@ void VirtualDisc::make_dir(char* path)
                 if(!success)
                 {
                     datablock_tab[last_data_block].next = find_free_datablock();
-                    if(datablock_tab[last_data_block].next = -1)
+                    if(datablock_tab[last_data_block].next == (uint64_t)-1)
                     {
                         std::cerr << "No free datablocks found.\n";
                         return;
                     }
                     uint64_t new_block_id = datablock_tab[last_data_block].next;
-                    if (datablock_tab[last_data_block].next == -1)
+                    if (datablock_tab[last_data_block].next == (uint64_t)-1)
                         return;
                     *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
                     data_map[datablock_tab[last_data_block].next] = true;
@@ -605,7 +605,7 @@ void VirtualDisc::print_dir_content(inode* dir)
         return;
     }
     uint64_t datablock_idx = dir->first_data_block;
-    while(datablock_idx != -1)
+    while(datablock_idx != (uint64_t)-1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[datablock_idx].data;
         for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -641,7 +641,7 @@ uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
 {
     uint64_t sum = 0;
     uint64_t curr_datablock_idx = dir->first_data_block;
-    while(curr_datablock_idx != -1)
+    while(curr_datablock_idx != (uint64_t)-1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
         for(long unsigned int i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -661,7 +661,7 @@ uint64_t VirtualDisc::get_sum_files_in_dir_recursive(inode* dir)
 {
     uint64_t sum = 0;
     uint64_t curr_datablock_idx = dir->first_data_block;
-    while(curr_datablock_idx != -1)
+    while(curr_datablock_idx != (uint64_t)-1)
     {
         directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
         for(uint64_t i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -690,7 +690,7 @@ uint64_t VirtualDisc::get_sum_files_in_dir_recursive(inode* dir)
 uint64_t VirtualDisc::get_free_space()
 {
     uint64_t number_of_free_datablocks = 0;
-    for(int i = 0; i < data_map_len; i++)
+    for(uint64_t i = 0; i < data_map_len; i++)
     {
         if(data_map[i] == 0)
         {
@@ -760,7 +760,7 @@ void VirtualDisc::remove_file(inode* file)
     if(file->type == inode_type::TYPE_DIRECTORY)
     {
         uint64_t curr_datablock_idx = file->first_data_block;
-        while(curr_datablock_idx != -1)
+        while(curr_datablock_idx != (uint64_t)-1)
         {
             directory_element* directory_elements = (directory_element*)datablock_tab[curr_datablock_idx].data;
             for(uint64_t i = 0; i < DIR_ELEMS_PER_BLOCK; i++)
@@ -806,7 +806,7 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
     }
     //Get id of first block to dealloc
     uint64_t db_id = file->first_data_block;
-    for(int i = 0; i < new_amount_of_blocks; i++)
+    for(uint32_t i = 0; i < new_amount_of_blocks; i++)
     {
         db_id = datablock_tab[db_id].next;
     }
