@@ -24,6 +24,6 @@ wolnej pamięci na dysku wirtualnym
 
 - [ ] dodanie do pliku o zadanej nazwie n bajtów
 
-- [ ] skrócenie pliku o zadanej nazwie o n bajtów
+- [x] skrócenie pliku o zadanej nazwie o n bajtów
 
 - [x] wyświetlenie informacji o zajętości dysku.
