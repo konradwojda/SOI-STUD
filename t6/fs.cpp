@@ -103,6 +103,7 @@ public:
     void remove_file(inode* file);
 
     void decrease_file_size(char* path_to_dir, char* filename, uint32_t size_amount);
+    void increase_file_size(char* path_to_dir, char* filename, uint32_t size_amount);
 
 };
 
@@ -635,6 +636,7 @@ void VirtualDisc::print_dir_content(inode* dir)
         }
         datablock_idx = datablock_tab[datablock_idx].next;
     }
+    checked_inodes_ids.clear();
 }
 
 uint64_t VirtualDisc::get_sum_files_in_dir(inode* dir)
@@ -791,7 +793,7 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
     }
 
     inode* file = find_in_dir(dir, filename);
-    if(!file)
+    if(!file || file->type != inode_type::TYPE_FILE)
     {
         std::cerr << "Invalid filename\n";
         return;
@@ -816,6 +818,77 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
 
 }
 
+void VirtualDisc::increase_file_size(char* path_to_dir, char* filename, uint32_t size_amount)
+{
+    inode* dir = find_dir_inode(path_to_dir);
+    if(!dir)
+    {
+        std::cerr << "Invalid path\n";
+        return;
+    }
+
+    inode* file = find_in_dir(dir, filename);
+    if(!file || file->type != inode_type::TYPE_FILE)
+    {
+        std::cerr << "Invalid filename\n";
+        return;
+    }
+
+    uint64_t last_db_id = file->first_data_block;
+    while(datablock_tab[last_db_id].next != (uint64_t)-1)
+    {
+        last_db_id = datablock_tab[last_db_id].next;
+    }
+
+    uint64_t last_db_size = file->size % BLOCK_SIZE;
+
+    // Extend last block, if possible
+    if(last_db_size > 0)
+    {
+        uint64_t amount_to_extend = BLOCK_SIZE - (file->size % BLOCK_SIZE);
+        if(amount_to_extend > size_amount)
+        {
+            amount_to_extend = size_amount;
+        }
+        memset(datablock_tab[last_db_id].data + last_db_size * sizeof(uint8_t), 0, amount_to_extend);
+
+        size_amount -= amount_to_extend;
+        file->size += amount_to_extend;
+    }
+    while(size_amount > 0)
+    {
+        // Find free datablock and allocate
+        datablock_tab[last_db_id].next = find_free_datablock();
+        if (datablock_tab[last_db_id].next == (uint64_t)-1)
+        {
+            std::cerr << "No free datablocks found\n";
+            return;
+        }
+        data_map[datablock_tab[last_db_id].next] = true;
+
+        // Clear new datablock
+
+        uint64_t size_in_new_block;
+        if(size_amount > BLOCK_SIZE)
+        {
+            size_in_new_block = BLOCK_SIZE;
+        }
+        else
+        {
+            size_in_new_block = size_amount;
+        }
+
+        memset(datablock_tab[datablock_tab[last_db_id].next].data, 0, size_in_new_block);
+
+        size_amount -= size_in_new_block;
+        file->size += size_in_new_block;
+
+        last_db_id = datablock_tab[last_db_id].next;
+
+    }
+
+}
+
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
@@ -836,7 +909,7 @@ int main(int argc, char* argv[])
     strcpy(path1, "a/b");
     char file1[80];
     strcpy(file1, "dupa");
-    vd.decrease_file_size(path1, file1, 1000);
+    vd.increase_file_size(path1, file1, 1000);
     strcpy(path1, "a/b");
     vd.print_dir_content(vd.find_dir_inode(path1));
     // vd.open();

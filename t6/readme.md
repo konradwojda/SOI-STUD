@@ -22,7 +22,7 @@ wolnej pamięci na dysku wirtualnym
 
 - [x] usuwanie pliku lub dowiązania z wirtualnego dysku,
 
-- [ ] dodanie do pliku o zadanej nazwie n bajtów
+- [x] dodanie do pliku o zadanej nazwie n bajtów
 
 - [x] skrócenie pliku o zadanej nazwie o n bajtów
 
