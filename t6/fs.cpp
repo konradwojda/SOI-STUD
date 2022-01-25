@@ -954,7 +954,7 @@ int fs_unlink(VirtualDisc vd, char* path, char* filename)
     vd.open();
     vd.unlink(path, filename);
     vd.save();
-    return 0;   
+    return 0;
 }
 
 int fs_link(VirtualDisc vd, char* path_to_dir, char* filename, char* path_to_link_dir, char* link_filename)
@@ -978,6 +978,7 @@ int fs_increase_filesize(VirtualDisc vd, char* path, char* filename, uint32_t si
     vd.open();
     vd.increase_file_size(path, filename, size);
     vd.save();
+    return 0;
 }
 
 int fs_decrease_filesize(VirtualDisc vd, char* path, char* filename, uint32_t size)
@@ -985,13 +986,14 @@ int fs_decrease_filesize(VirtualDisc vd, char* path, char* filename, uint32_t si
     vd.open();
     vd.decrease_file_size(path, filename, size);
     vd.save();
+    return 0;
 }
 
 void print_help()
 {
-    std::cout << "Usage: ./fs <command> <arguments>\n";
+    std::cout << "Usage: ./fs <disc_name> <command> <arguments>\n";
     std::cout << "- create <name> <size> - creates new virtual disc\n";
-    std::cout << "- cpto <path_to_dir> <name_of_file_in_virtual> <name_of_file> - copies file to virtual disc\n";
+    std::cout << "- cpto <name_of_file> <path_on_vd> - copies file to virtual disc\n";
     std::cout << "- cpfrom <path_to_dir> <name_on_virtual> <name> - copies file from virtual disc\n";
     std::cout << "- mkdir <path> - makes directories (nested possible)\n";
     std::cout << "- rm <path> <filename> - removes file (or directory) of given name from given directory\n";
@@ -1005,17 +1007,63 @@ void print_help()
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
-    if(strcmp(argv[1], "create") == 0)
-    {
-        return fs_create(vd, argv[2], std::stoul(argv[3]));
-    }
-    else if(strcmp(argv[1], "cpto") == 0)
-    {
-        return fs_copy_to_virtual(vd, argv[2], argv[3]);
-    }
-    else
-    {
-        std::cout << "Unknown command\n";
-    }
-    return 0;
+    vd.set_name("test2");
+    char path[80];
+    strcpy(path, "");
+    vd.print_dir_content(vd.find_dir_inode(path));
+    // VirtualDisc vd;
+    // if(argc < 2)
+    // {
+    //     print_help();
+    //     return 1;
+    // }
+    // if(strcmp(argv[1], "create") == 0)
+    // {
+    //     return fs_create(vd, argv[2], std::stoul(argv[3]));
+    // }
+    // else {
+    //     vd.set_name(argv[1]);
+    //     if(strcmp(argv[2], "cpto") == 0)
+    //     {
+    //         return fs_copy_to_virtual(vd, argv[3], argv[4]);
+    //     }
+    //     else if(strcmp(argv[2], "cpfrom") == 0)
+    //     {
+    //         return fs_copy_from_virtual(vd, argv[3], argv[4], argv[5]);
+    //     }
+    //     else if(strcmp(argv[2], "mkdir") == 0)
+    //     {
+    //         return fs_mkdir(vd, argv[3]);
+    //     }
+    //     else if(strcmp(argv[2], "rm") == 0)
+    //     {
+    //         return fs_rm(vd, argv[3], argv[4]);
+    //     }
+    //     else if(strcmp(argv[2], "link") == 0)
+    //     {
+    //         return fs_link(vd, argv[3], argv[4], argv[5], argv[6]);
+    //     }
+    //     else if(strcmp(argv[2], "unlink") == 0)
+    //     {
+    //         return fs_unlink(vd, argv[3], argv[4]);
+    //     }
+    //     else if(strcmp(argv[2], "ls") == 0)
+    //     {
+    //         return fs_ls(vd, argv[3]);
+    //     }
+    //     else if(strcmp(argv[2], "inc") == 0)
+    //     {
+    //         return fs_increase_filesize(vd, argv[3], argv[4], atoi(argv[5]));
+    //     }
+    //     else if(strcmp(argv[2], "dec") == 0)
+    //     {
+    //         return fs_decrease_filesize(vd, argv[3], argv[4], atoi(argv[5]));
+    //     }
+    //     else
+    //     {
+    //         print_help();
+    //     }
+
+    // }
+    // return 0;
 }
