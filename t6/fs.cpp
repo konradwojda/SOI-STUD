@@ -87,6 +87,7 @@ public:
     directory_element* find_elem_in_dir(inode* dir, char* filename);
     inode* find_dir_inode(char* path);
     void add_elem_to_dir(inode* dir, char* name, u_int16_t node_id);
+    void dealloc_datablocks(uint16_t first_db_id);
 
     void print_dir_content(inode* dir);
     uint64_t get_sum_files_in_dir(inode* dir);
@@ -334,6 +335,31 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
         *(directory_element*)(datablock_tab[new_block_id].data) = dir_elem;
         data_map[datablock_tab[last_data_block].next] = true;
     }
+}
+
+void VirtualDisc::dealloc_datablocks(uint16_t first_db_id)
+{
+    // Destroys datablock linked list by setting next = -1 for every datablock
+    // Also changes data map to show deallocated blocks as unused
+    std::vector<uint16_t> block_ids;
+    if(first_db_id == -1)
+        return;
+    uint16_t next_id = datablock_tab[first_db_id].next;
+    block_ids.push_back(next_id);
+    datablock_tab[first_db_id].next = -1;
+    while(next_id != -1)
+    {
+        next_id = datablock_tab[next_id].next;
+        if(next_id != -1)
+            datablock_tab[next_id].next = -1;
+            block_ids.push_back(next_id);
+    }
+
+    for(auto id:block_ids)
+    {
+        data_map[id] = false;
+    }
+
 }
 
 void VirtualDisc::remove_datablock_from_inode(inode* node, uint32_t idx)
@@ -726,7 +752,6 @@ void VirtualDisc::unlink(char* path_to_dir, char* filename)
 
 void VirtualDisc::remove_file(inode* file)
 {
-    //todo: dealloc block in datamap
     file->references_num--;
     if(file->references_num != 0)
         return;
@@ -748,7 +773,7 @@ void VirtualDisc::remove_file(inode* file)
             curr_datablock_idx = datablock_tab[curr_datablock_idx].next;
         }
     }
-
+    dealloc_datablocks(file->first_data_block);
     file->first_data_block = -1;
     file->references_num = 0;
     file->size = 0;
