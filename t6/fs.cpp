@@ -1005,48 +1005,17 @@ void print_help()
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
-    vd.create("test", 1024*1024);
-    vd.open();
-    char dirs2[80];
-    strcpy(dirs2, "a/b/c/d");
-    vd.make_dir(dirs2);
-    char file[80];
-    strcpy(file, "dupa");
-    strcpy(dirs2, "a/b");
-    vd.copy_file_to_disc(file, dirs2);
-    vd.save();
-    vd.open();
-    char path1[80];
-    strcpy(path1, "a/b");
-    vd.print_dir_content(vd.find_dir_inode(path1));
-    strcpy(path1, "a/b");
-    char file1[80];
-    strcpy(file1, "dupa");
-    vd.increase_file_size(path1, file1, 1000);
-    strcpy(path1, "a/b");
-    vd.print_dir_content(vd.find_dir_inode(path1));
-    // vd.open();
-    // char path1[80];
-    // strcpy(path1, "a");
-    // char file1[80];
-    // strcpy(file1, "b");
-    // char path2[80];
-    // strcpy(path2, "a/b/c");
-    // char file2[80];
-    // strcpy(file2, "dd");
-    // vd.link(path1, file1, path2, file2);
-    // strcpy(path1, "a/b/c");
-    // vd.print_dir_content(vd.find_dir_inode(path1));
-    // strcpy(path1, "a/b/c");
-    // strcpy(file1, "dd");
-    // vd.unlink(path1, file1);
-    // strcpy(path2, "a/b/c");
-    // vd.print_dir_content(vd.find_dir_inode(path2));
-    // char fileonpd[80];
-    // strcpy(fileonpd, "dupa_test");
-    // strcpy(path1, "a/b/c");
-    // strcpy(file, "dupalink");
-    // vd.copy_file_from_disc(path1, file, fileonpd);
-    // vd.save();
+    if(strcmp(argv[1], "create") == 0)
+    {
+        return fs_create(vd, argv[2], std::stoul(argv[3]));
+    }
+    else if(strcmp(argv[1], "cpto") == 0)
+    {
+        return fs_copy_to_virtual(vd, argv[2], argv[3]);
+    }
+    else
+    {
+        std::cout << "Unknown command\n";
+    }
     return 0;
 }
