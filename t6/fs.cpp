@@ -891,32 +891,12 @@ void VirtualDisc::increase_file_size(char* path_to_dir, char* filename, uint32_t
 
 int fs_create(VirtualDisc vd, char* disc_name, uint64_t size)
 {
-    char d_name[16];
-    char choice;
-    if(fopen(disc_name, "rb") == nullptr)
-    {
-        std::cout << "Disc doesn't exist. Do you want to create new one?(y/n)\n";
-        std::cin >> choice;
-    }
-    if(choice == 'y')
-    {
-        strcpy(d_name, disc_name);
-        vd.create(d_name, size);
-        return 0;
-    }
-    else
-    {
-        return 0;
-    }
+    vd.create(disc_name, size);
+    return 0;
 }
 
 int fs_copy_to_virtual(VirtualDisc vd, char* filename, char* path)
 {
-    if(fopen(filename, "rb") == nullptr)
-    {
-        std::cout << "Invalid filename\n";
-        return 1;
-    }
     vd.open();
     vd.copy_file_to_disc(filename, path);
     vd.save();
@@ -1002,68 +982,68 @@ void print_help()
     std::cout << "- ls <path> - shows content of given path\n";
     std::cout << "- inc <path_to_dir> <filename> <size> - increases size of given file by <size> bytes\n";
     std::cout << "- dec <path_to_dir> <filename> <size> - decreases size of file by <size> bytes\n";
+    std::cout << "Warning! Root directory stands for \"\"\n";
 }
 
 int main(int argc, char* argv[])
 {
     VirtualDisc vd;
-    vd.set_name("test2");
-    char path[80];
-    strcpy(path, "");
-    vd.print_dir_content(vd.find_dir_inode(path));
-    // VirtualDisc vd;
-    // if(argc < 2)
-    // {
-    //     print_help();
-    //     return 1;
-    // }
-    // if(strcmp(argv[1], "create") == 0)
-    // {
-    //     return fs_create(vd, argv[2], std::stoul(argv[3]));
-    // }
-    // else {
-    //     vd.set_name(argv[1]);
-    //     if(strcmp(argv[2], "cpto") == 0)
-    //     {
-    //         return fs_copy_to_virtual(vd, argv[3], argv[4]);
-    //     }
-    //     else if(strcmp(argv[2], "cpfrom") == 0)
-    //     {
-    //         return fs_copy_from_virtual(vd, argv[3], argv[4], argv[5]);
-    //     }
-    //     else if(strcmp(argv[2], "mkdir") == 0)
-    //     {
-    //         return fs_mkdir(vd, argv[3]);
-    //     }
-    //     else if(strcmp(argv[2], "rm") == 0)
-    //     {
-    //         return fs_rm(vd, argv[3], argv[4]);
-    //     }
-    //     else if(strcmp(argv[2], "link") == 0)
-    //     {
-    //         return fs_link(vd, argv[3], argv[4], argv[5], argv[6]);
-    //     }
-    //     else if(strcmp(argv[2], "unlink") == 0)
-    //     {
-    //         return fs_unlink(vd, argv[3], argv[4]);
-    //     }
-    //     else if(strcmp(argv[2], "ls") == 0)
-    //     {
-    //         return fs_ls(vd, argv[3]);
-    //     }
-    //     else if(strcmp(argv[2], "inc") == 0)
-    //     {
-    //         return fs_increase_filesize(vd, argv[3], argv[4], atoi(argv[5]));
-    //     }
-    //     else if(strcmp(argv[2], "dec") == 0)
-    //     {
-    //         return fs_decrease_filesize(vd, argv[3], argv[4], atoi(argv[5]));
-    //     }
-    //     else
-    //     {
-    //         print_help();
-    //     }
+    if(argc < 2)
+    {
+        print_help();
+        return 1;
+    }
+    if(strcmp(argv[1], "create") == 0)
+    {
+        return fs_create(vd, argv[2], std::stoul(argv[3]));
+    }
+    else {
+        vd.set_name(argv[1]);
+        if(strcmp(argv[2], "cpto") == 0)
+        {
+            return fs_copy_to_virtual(vd, argv[3], argv[4]);
+        }
+        else if(strcmp(argv[2], "cpfrom") == 0)
+        {
+            return fs_copy_from_virtual(vd, argv[3], argv[4], argv[5]);
+        }
+        else if(strcmp(argv[2], "mkdir") == 0)
+        {
+            return fs_mkdir(vd, argv[3]);
+        }
+        else if(strcmp(argv[2], "rm") == 0)
+        {
+            return fs_rm(vd, argv[3], argv[4]);
+        }
+        else if(strcmp(argv[2], "link") == 0)
+        {
+            return fs_link(vd, argv[3], argv[4], argv[5], argv[6]);
+        }
+        else if(strcmp(argv[2], "unlink") == 0)
+        {
+            return fs_unlink(vd, argv[3], argv[4]);
+        }
+        else if(strcmp(argv[2], "ls") == 0)
+        {
+            return fs_ls(vd, argv[3]);
+        }
+        else if(strcmp(argv[2], "inc") == 0)
+        {
+            return fs_increase_filesize(vd, argv[3], argv[4], atoi(argv[5]));
+        }
+        else if(strcmp(argv[2], "dec") == 0)
+        {
+            return fs_decrease_filesize(vd, argv[3], argv[4], atoi(argv[5]));
+        }
+        else
+        {
+            print_help();
+        }
 
-    // }
-    // return 0;
+    }
+    return 0;
 }
+// Known bugs:
+// copying to empty dirs does not work
+// dealloc blocks after remove doesnt work at all
+// Handle fopen errors
