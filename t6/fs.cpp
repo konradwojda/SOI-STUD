@@ -117,6 +117,11 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     strncpy((char*)superblock_.name, file_name, FILENAME_LEN);
     strncpy((char*)name, file_name, FILENAME_LEN);
     file = fopen((char*)superblock_.name, "wb+");
+    if (!file)
+    {
+        std::perror("Cannot open file");
+        exit(1);
+    }
 
     superblock_.disc_size = size;
     unsigned inodes = size / MAX_FILES_PROPORTION / sizeof(inode);
@@ -129,35 +134,65 @@ void VirtualDisc::create(char file_name[], u_int64_t size)
     superblock_.data_map_offset = superblock_.nodes_offset + superblock_.inodes_num * sizeof(inode);
     superblock_.datablocks_offset = superblock_.data_map_offset + superblock_.datablocks_num * sizeof(bool);
 
-    fwrite(&superblock_, sizeof(superblock), 1, file);
+    size_t result = fwrite(&superblock_, sizeof(superblock), 1, file);
+    if(result != 1)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
 
     inode root_inode{};
     root_inode.first_data_block = -1;
     root_inode.type = inode_type::TYPE_DIRECTORY;
     root_inode.references_num = 1;
 
-    fwrite(&root_inode, sizeof(root_inode), 1, file);
+    result = fwrite(&root_inode, sizeof(root_inode), 1, file);
+    if(result != 1)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
 
     for(unsigned int i = 0; i < inodes - 1; ++i)
     {
         inode node{};
         node.first_data_block = -1;
-        fwrite(&node, sizeof(node), 1, file);
+        result = fwrite(&node, sizeof(node), 1, file);
+        if(result != 1)
+        {
+            std::cerr << "Error while saving to file\n";
+            exit(1);
+        }
     }
 
     for(uint32_t i = 0; i < superblock_.datablocks_num; i++) {
         int j = 0;
-        fwrite(&j, sizeof(bool), 1, file);
+        result = fwrite(&j, sizeof(bool), 1, file);
+        if(result != 1)
+        {
+            std::cerr << "Error while saving to file\n";
+            exit(1);
+        }
     }
 
     for(uint32_t i = 0; i < superblock_.datablocks_num; i++)
     {
         datablock db{};
         db.next = -1;
-        fwrite(&db, sizeof(db), 1, file);
+        result = fwrite(&db, sizeof(db), 1, file);
+        if(result != 1)
+        {
+            std::cerr << "Error while saving to file\n";
+            exit(1);
+        }
     }
 
-    fclose(file);
+    int res = fclose(file);
+    if(res != 0)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
     file = nullptr;
 }
 
@@ -165,9 +200,19 @@ void VirtualDisc::open()
 {
     // Open file
     file = fopen(this->name, "rb+");
+    if (!file)
+    {
+        std::perror("Cannot open file");
+        exit(1);
+    }
 
     //Read superblock
-    fread(&this->superblock_, sizeof(superblock), 1, file);
+    size_t result = fread(&this->superblock_, sizeof(superblock), 1, file);
+    if(result != 1)
+    {
+        std::cerr << "Error while reading file\n";
+        exit(1);
+    }
 
     this->node_tab_len = this->superblock_.inodes_num;
     this->data_map_len = this->superblock_.datablocks_num;
@@ -175,26 +220,71 @@ void VirtualDisc::open()
 
     //Read inodes
     node_tab = new inode[superblock_.inodes_num];
-    fread(node_tab, sizeof(inode), superblock_.inodes_num, file);
+    result = fread(node_tab, sizeof(inode), superblock_.inodes_num, file);
+    if(result != superblock_.inodes_num)
+    {
+        std::cerr << "Error while reading file\n";
+        exit(1);
+    }
 
     //Read data map
     data_map = new bool[superblock_.datablocks_num];
-    fread(data_map, sizeof(bool), superblock_.datablocks_num, file);
+    result = fread(data_map, sizeof(bool), superblock_.datablocks_num, file);
+    if(result != superblock_.datablocks_num)
+    {
+        std::cerr << "Error while reading file\n";
+        exit(1);
+    }
 
     //Read datablocks
     datablock_tab = new datablock[superblock_.datablocks_num];
-    fread(datablock_tab, sizeof(datablock), superblock_.datablocks_num, file);
+    result = fread(datablock_tab, sizeof(datablock), superblock_.datablocks_num, file);
+    if(result != superblock_.datablocks_num)
+    {
+        std::cerr << "Error while reading file\n";
+        exit(1);
+    }
 
 }
 
 void VirtualDisc::save()
 {
-    fseek(file, 0, 0);
-    fwrite(&this->superblock_, sizeof(superblock), 1, file);
-    fwrite(this->node_tab, sizeof(inode), this->node_tab_len, file);
-    fwrite(this->data_map, sizeof(bool), this->data_map_len, file);
-    fwrite(this->datablock_tab, sizeof(datablock), this->datablock_tab_len, file);
-    fclose(file);
+    int res = fseek(file, 0, 0);
+    if(res != 0)
+    {
+        std::cerr << "Error while seeking in file\n";
+        exit(1);
+    }
+    size_t result = fwrite(&this->superblock_, sizeof(superblock), 1, file);
+    if(result != 1)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
+    result = fwrite(this->node_tab, sizeof(inode), this->node_tab_len, file);
+    if(result != this->node_tab_len)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
+    result = fwrite(this->data_map, sizeof(bool), this->data_map_len, file);
+    if(result != this->data_map_len)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
+    result = fwrite(this->datablock_tab, sizeof(datablock), this->datablock_tab_len, file);
+    if(result != this->datablock_tab_len)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
+    res = fclose(file);
+    if(res != 0)
+    {
+        std::cerr << "Error while saving to file\n";
+        exit(1);
+    }
     file = nullptr;
 }
 
@@ -403,6 +493,11 @@ void VirtualDisc::copy_file_to_disc(char* filename, char* path)
     add_elem_to_dir(dir, filename, file_inode);
 
     FILE* file_to_copy = fopen(filename, "rb+");
+    if (!file)
+    {
+        std::perror("Cannot open file");
+        exit(1);
+    }
 
     node_tab[file_inode].first_data_block = find_free_datablock();
     if(node_tab[file_inode].first_data_block == (uint64_t)-1)
@@ -477,13 +572,23 @@ void VirtualDisc::copy_file_from_disc(char* path_to_dir, char* filename, char* n
     }
 
     FILE* file_on_pd = fopen(name_on_pd, "wb+");
+    if (!file)
+    {
+        std::perror("Cannot open file");
+        exit(1);
+    }
 
     uint64_t curr_datablock_index = file->first_data_block;
     uint64_t size_to_read = file->size;
     while(curr_datablock_index != (uint64_t)-1)
     {
         uint8_t* data = datablock_tab[curr_datablock_index].data;
-        fwrite(data, (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE), 1, file_on_pd);
+        size_t result = fwrite(data, (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE), 1, file_on_pd);
+        if(result != this->data_map_len)
+        {
+            std::cerr << "Error while saving to file\n";
+            exit(1);
+        }
         size_to_read -= (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE);
         curr_datablock_index = datablock_tab[curr_datablock_index].next;
     }
@@ -1048,5 +1153,3 @@ int main(int argc, char* argv[])
 
     }
 }
-// Known bugs:
-// Handle fopen errors
