@@ -299,6 +299,7 @@ void VirtualDisc::add_elem_to_dir(inode* dir, char* name, u_int16_t node_id)
             std::cerr << "No free datablocks\n";
             return;
         }
+        data_map[dir->first_data_block] = true;
     }
     uint64_t data_block_idx = dir->first_data_block;
     uint64_t last_data_block = data_block_idx;
@@ -694,7 +695,7 @@ uint64_t VirtualDisc::get_free_space()
     uint64_t number_of_free_datablocks = 0;
     for(uint64_t i = 0; i < data_map_len; i++)
     {
-        if(data_map[i] == 0)
+        if(data_map[i] == false)
         {
             number_of_free_datablocks++;
         }
@@ -1041,9 +1042,7 @@ int main(int argc, char* argv[])
         }
 
     }
-    return 0;
 }
 // Known bugs:
-// copying to empty dirs does not work
 // dealloc blocks after remove doesnt work at all
 // Handle fopen errors
