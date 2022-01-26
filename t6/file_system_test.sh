@@ -9,8 +9,8 @@
 # 4 - copying file from virtual disc - check diff
 # 5 - link file
 # 6 - unlink file
-# 7 - increment file size
-# 8 - decrement file size
+# 7 - increase file size
+# 8 - decrease file size
 # 9 - remove given file and directory
 
 ##########################################
@@ -93,23 +93,23 @@ schema_6()
 
 schema_7()
 {
-    echo "Incrementing short file size by 1000 bytes"
-    echo "Information before incrementing: "
+    echo "Inceasing short file size by 1000 bytes"
+    echo "Information before inceasing: "
     ./fs $vd_name ls a
     ./fs $vd_name inc a short 1000
     echo
-    echo "Information after incrementing: "
+    echo "Information after inceasing: "
     ./fs $vd_name ls a
 }
 
 schema_8()
 {
-    echo "Decrementing short file size by 1000 bytes"
-    echo "Information before decrementing: "
+    echo "Decreasing short file size by 1000 bytes"
+    echo "Information before decreasing: "
     ./fs $vd_name ls a
     ./fs $vd_name dec a short 1000
     echo
-    echo "Information after decrementing: "
+    echo "Information after decreasing: "
     ./fs $vd_name ls a
 }
 
