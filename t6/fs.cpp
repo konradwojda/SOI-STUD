@@ -344,27 +344,17 @@ void VirtualDisc::dealloc_datablocks(uint64_t first_db_id)
     // Destroys datablock linked list by setting next = -1 for every datablock
     // Also changes data map to show deallocated blocks as unused
     std::vector<uint64_t> block_ids;
-    if(first_db_id == (uint64_t)-1)
-        return;
-    uint64_t next_id = datablock_tab[first_db_id].next;
-    if(next_id != (uint64_t)-1)
-        block_ids.push_back(next_id);
-    datablock_tab[first_db_id].next = -1;
-    while(next_id != (uint64_t)-1)
+    uint64_t id = first_db_id;
+    while(id != (uint64_t)-1)
     {
-        next_id = datablock_tab[next_id].next;
-        if(next_id != (uint64_t)-1)
-        {
-            datablock_tab[next_id].next = -1;
-            block_ids.push_back(next_id);
-        }
+        block_ids.push_back(id);
+        id = datablock_tab[id].next;
     }
-
-    for(auto id:block_ids)
+    for(auto id : block_ids)
     {
+        datablock_tab[id].next = -1;
         data_map[id] = false;
     }
-
 }
 
 void VirtualDisc::remove_datablock_from_inode(inode* node, uint64_t idx)
@@ -809,14 +799,23 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
     }
     //Get id of first block to dealloc
     uint64_t db_id = file->first_data_block;
+    uint64_t prev_db_id = -1;
     for(uint32_t i = 0; i < new_amount_of_blocks; i++)
     {
+        prev_db_id = db_id;
         db_id = datablock_tab[db_id].next;
     }
 
     // Deallocate next blocks from given one
     dealloc_datablocks(db_id);
-
+    if(prev_db_id == (uint64_t)-1)
+    {
+        file->first_data_block = -1;
+    }
+    else
+    {
+        datablock_tab[prev_db_id].next = -1;
+    }
 }
 
 void VirtualDisc::increase_file_size(char* path_to_dir, char* filename, uint32_t size_amount)
@@ -1044,5 +1043,4 @@ int main(int argc, char* argv[])
     }
 }
 // Known bugs:
-// dealloc blocks after remove doesnt work at all
 // Handle fopen errors
