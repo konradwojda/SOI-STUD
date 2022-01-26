@@ -790,6 +790,12 @@ void VirtualDisc::decrease_file_size(char* path_to_dir, char* filename, uint32_t
         return;
     }
 
+    if(size_amount > file->size)
+    {
+        std::cerr << "Too much size to decrease\n";
+        return;
+    }
+
     file->size -= size_amount;
 
     uint32_t new_amount_of_blocks = file->size / BLOCK_SIZE;
