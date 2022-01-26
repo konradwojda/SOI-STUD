@@ -584,7 +584,7 @@ void VirtualDisc::copy_file_from_disc(char* path_to_dir, char* filename, char* n
     {
         uint8_t* data = datablock_tab[curr_datablock_index].data;
         size_t result = fwrite(data, (size_to_read < BLOCK_SIZE ? size_to_read : BLOCK_SIZE), 1, file_on_pd);
-        if(result != this->data_map_len)
+        if(result != 1)
         {
             std::cerr << "Error while saving to file\n";
             exit(1);
