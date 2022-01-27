@@ -122,7 +122,7 @@ schema_9()
     echo "Informations after remove:"
     ./fs $vd_name ls /
     echo
-    echo "Removing \"a\" directory (with short file)"
+    echo "Removing short file from \"a\" directory"
     ./fs $vd_name rm a short
     echo "Informations after remove:"
     ./fs $vd_name ls a
