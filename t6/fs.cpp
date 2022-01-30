@@ -633,7 +633,6 @@ void VirtualDisc::make_dir(char* path)
             strncpy((char*)dir_elem.name, curr_dir, FILENAME_LEN);
             dir_elem.used = true;
 
-            //if to wyjebania
             if (curr_path->first_data_block == (uint64_t)-1)
             {
                 curr_path->first_data_block = find_free_datablock();
